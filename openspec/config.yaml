@@ -7,17 +7,25 @@ context: |
   Servicio sin estado ni base de datos: recibe una solicitud de préstamo ya
   normalizada por n8n y devuelve una prioridad calculada por un motor de reglas
   determinístico. La IA nunca decide la prioridad.
-  El contrato de POST /evaluar (nombres de campos y códigos) es fijo: n8n ya
-  está construido y lo consume. Cambiarlo es un cambio incompatible. El request
-  no incluye datos personales identificables: solo session_id. Los campos
-  extra se ignoran, sin fallar ni registrarse.
-  JSON en snake_case. Importes con BigDecimal, nunca double; los umbrales se
-  comparan sin dividir. Los números se aceptan como número JSON o como string
-  numérico con formato decimal simple.
-  El score es la suma de los puntos de los motivos, limitado entre 0 y 100. La
-  respuesta incluye version_reglas, derivada de la configuración efectiva.
-  Cada regla de negocio es una clase que implementa una interfaz común.
-  Puntajes y umbrales se configuran en application.yml y se validan al arrancar.
+  El contrato de POST /evaluar es fijo: n8n ya está construido y lo consume.
+  Cambiarlo es un cambio incompatible, y debe declararse en la propuesta con
+  los campos que entran y salen. El request no incluye datos personales
+  identificables: solo session_id. Los campos extra se ignoran, sin fallar ni
+  registrarse. edad y antiguedad_meses son requeridos.
+  JSON en snake_case. Importes con BigDecimal, nunca double. Los números se
+  aceptan como número JSON o como string numérico con formato decimal simple.
+  Score = max(0, min(100, suma de puntos)). Si la solicitud es inelegible
+  (menor de 18), la inelegibilidad reemplaza al recorte: prioridad BAJA y
+  score 0, con un único motivo final. Los máximos por situación laboral están
+  en la spec, por tabla, y no se normalizan a 100.
+  Motivos en orden fijo: reglas excluyentes (con su resultado, también cuando
+  pasan), después reglas de puntaje (urgencia, documentación, motivo,
+  situación laboral, antigüedad, clearing, carga), y al final el motivo de
+  recorte o de ajuste si corresponde. El score se reproduce sumando los
+  motivos de puntaje.
+  Reglas excluyentes y de puntaje son interfaces distintas (ReglaExcluyente y
+  ReglaPuntaje). Cada regla es una clase. Puntajes y umbrales se configuran en
+  application.yml y se validan al arrancar.
   Errores como ProblemDetail (RFC 9457) desde un único @RestControllerAdvice,
   con un type estable por caso y la lista de campos inválidos.
   El servicio se expone a internet: todo endpoint exige la clave de API
@@ -34,12 +42,15 @@ rules:
   specs:
     - "Cada requirement incluye al menos un escenario de error además del caso feliz"
     - "Cada escenario indica método HTTP, ruta y código de estado esperado"
-    - "Cada regla de negocio es un requirement; los valores en el borde exacto de cada umbral tienen su propio escenario"
+    - "Cada regla de negocio es un requirement; los valores en el borde exacto de cada umbral y de cada límite de elegibilidad tienen su propio escenario"
+    - "Las tablas de máximos por situación laboral se escriben completas, con el ajuste de clearing"
     - "Sin contradicciones ni términos ambiguos; cada término del dominio tiene un único significado"
   design:
     - "Listar los endpoints con request y response, y los type de error"
+    - "Separar las reglas excluyentes (ReglaExcluyente) de las de puntaje (ReglaPuntaje)"
   tasks:
     - "Cada escenario de la spec tiene al menos una tarea de test que lo nombra exactamente"
+    - "Un test verifica el orden completo de los motivos y que el motivo final aparece una sola vez"
     - "Terminar con las tareas de cierre: validate, revisión del código por una persona y archive como último commit"
 
 operations:
