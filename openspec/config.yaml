@@ -23,14 +23,26 @@ context: |
   situación laboral, antigüedad, clearing, carga), y al final el motivo de
   recorte o de ajuste si corresponde. El score se reproduce sumando los
   motivos de puntaje.
-  Reglas excluyentes y de puntaje son interfaces distintas (ReglaExcluyente y
-  ReglaPuntaje). Cada regla es una clase. Puntajes y umbrales se configuran en
-  application.yml y se validan al arrancar.
+  Motor de reglas: Drools. Cada regla de negocio es una regla del DRL con un
+  identificador estable; excluyentes y de puntaje se distinguen por el tipo de
+  motivo que emiten (ELEGIBILIDAD o PUNTAJE). El DRL emite códigos y es solo
+  ASCII; Java arma los textos, ordena los motivos, calcula el score, aplica el
+  recorte o la inelegibilidad y asigna la prioridad. Sesión sin estado por
+  solicitud; el DRL se compila al arrancar y la app no arranca si tiene
+  errores. Puntajes y umbrales se configuran en application.yml, se validan al
+  arrancar y llegan al DRL como global.
+  version_reglas: SHA-256 de la configuración canónica, el DRL con finales de
+  línea LF y una constante de revisión de la lógica en Java, truncado a 12 hex.
   Errores como ProblemDetail (RFC 9457) desde un único @RestControllerAdvice,
-  con un type estable por caso y la lista de campos inválidos.
+  con un type estable por caso con formato urn:leads-api:error:<caso> (nunca
+  about:blank) y la lista de campos inválidos. Los identificadores de error
+  (type y codigo) usan guion; los códigos de dominio y los nombres de campo
+  del contrato siguen con guion bajo.
   El servicio se expone a internet: todo endpoint exige la clave de API
   (LEADS_API_KEY, variable de entorno; la app no arranca sin ella). No exponer
-  springdoc ni actuator. Nunca registrar en logs el cuerpo de las solicitudes.
+  springdoc ni actuator. Nunca registrar en logs el cuerpo de las solicitudes;
+  solo session_id con formato válido, junto a prioridad, score,
+  version_reglas o el type del error.
   Paquetes: primero por funcionalidad y después por capa. Sin persistencia.
 
 rules:
@@ -47,7 +59,7 @@ rules:
     - "Sin contradicciones ni términos ambiguos; cada término del dominio tiene un único significado"
   design:
     - "Listar los endpoints con request y response, y los type de error"
-    - "Separar las reglas excluyentes (ReglaExcluyente) de las de puntaje (ReglaPuntaje)"
+    - "Separar las reglas excluyentes (motivo ELEGIBILIDAD) de las de puntaje (motivo PUNTAJE), con el identificador de cada regla del DRL"
   tasks:
     - "Cada escenario de la spec tiene al menos una tarea de test que lo nombra exactamente"
     - "Un test verifica el orden completo de los motivos y que el motivo final aparece una sola vez"

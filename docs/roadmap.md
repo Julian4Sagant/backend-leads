@@ -2,10 +2,13 @@
 
 Plan corto de changes para construir leads-api, el servicio sin estado que
 recibe una solicitud de préstamo ya normalizada por n8n y devuelve la prioridad
-calculada por el motor de reglas. Surge del explore inicial (2026-10-09). Las
-verificaciones técnicas están en [notas-tecnicas-leads.md](notas-tecnicas-leads.md).
+calculada por el motor de reglas. Surge del explore inicial (2026-10-09) y se
+actualizó con el explore del change 1 (2026-10-13), que eligió Drools como
+motor de reglas. Las verificaciones técnicas están en
+[notas-tecnicas-leads.md](notas-tecnicas-leads.md).
 
-Estado: ningún change iniciado. `openspec/specs/` está vacío.
+Estado: change 1 en curso (`change/leads-api-crear-evaluacion-puntaje`).
+`openspec/specs/` está vacío.
 
 ## Capabilities
 
@@ -36,16 +39,21 @@ un solo lugar. `evaluacion-leads` la referencia.
 
 ### 1. `leads-api-crear-evaluacion-puntaje`
 Rebanada base: POST /evaluar de punta a punta.
-- Clave de API (filtro, 401, la app no arranca sin `LEADS_API_KEY`), sin
-  actuator ni springdoc, 404/405 con clave válida.
-- ProblemDetail desde un único `@RestControllerAdvice`, con la tabla de `type`.
+- Clave de API con un filtro propio, sin Spring Security (401; la app no
+  arranca sin `LEADS_API_KEY` o con una clave de menos de 32 caracteres, con
+  caracteres no ASCII imprimibles o con espacios), sin actuator ni springdoc,
+  404/405 con clave válida.
+- ProblemDetail desde un único `@RestControllerAdvice`, con la tabla de `type`
+  y `charset=UTF-8` explícito.
+- Drools 10.2.0 como motor de reglas (ver "Motor de reglas").
+- Se saca lombok del `pom.xml`.
 - Contrato nuevo. **Cambio incompatible para n8n**, a declarar en "Contratos
   afectados": sale `nombre` del request; entran `edad` y `antiguedad_meses`
   (requeridos); entra `version_reglas` en la response.
 - Validación: requeridos, valores permitidos de cada código, rangos, todos los
   errores juntos, campos extra ignorados.
-- Las 7 reglas de puntaje (`ReglaPuntaje`), prioridad, recorte 0/100 con su
-  motivo, orden de motivos, carga con BigDecimal sin dividir.
+- Las 7 reglas de puntaje en el DRL (motivo `PUNTAJE`), prioridad, recorte
+  0/100 con su motivo, orden de motivos, carga con BigDecimal sin dividir.
 - Puntajes y umbrales en `application.yml` con validación de coherencia;
   `version_reglas` y sus tests; tabla de máximos y su test; UTF-8.
 - Decisiones: 1, 2, 4 a 12, 14, 16, 17, 21 a 24.
@@ -53,7 +61,7 @@ Rebanada base: POST /evaluar de punta a punta.
   punto c), para que el change 3 no tenga que rehacerlo.
 
 ### 2. `leads-api-agregar-elegibilidad-edad`
-- Interfaz `ReglaExcluyente` y la regla de edad (< 18: BAJA, score 0).
+- Regla de edad en el DRL (motivo `ELEGIBILIDAD`; < 18: BAJA, score 0).
 - Motivo cuando pasa ("Mayor de edad: elegible").
 - Precedencia del ajuste por inelegibilidad sobre el recorte, con sus tres
   escenarios. Bordes 17 y 18.
@@ -78,27 +86,63 @@ del cuerpo. Si se expone por ngrok antes de cerrar el 4, el riesgo queda
 abierto. Hay dos opciones: no exponerlo hasta el 4, o adelantar el 4 al segundo
 lugar (es independiente de 2 y 3).
 
-## Decisiones transversales (propuestas, a confirmar en el change 1)
+## Decisiones transversales (confirmadas en el explore del change 1)
+
+### Motor de reglas
+Drools 10.2.0, verificado con un spike (notas técnicas, "Spike de Drools").
+
+```
+ POST /evaluar -> filtro de clave -> validación -> Solicitud tipada
+                                                       |
+                                                       v
+                  StatelessKieSession (una por solicitud)
+                  hechos: Solicitud, Resultado; global: puntajes
+                  cada regla emite un código de motivo con su posición
+                                                       |
+                                                       v
+                  Java: textos, orden por posición, suma, recorte o
+                  inelegibilidad, score, prioridad
+```
+
+- Cada regla de negocio es una regla del DRL con un identificador estable.
+  Excluyentes y de puntaje se distinguen por el tipo de motivo que emiten
+  (`ELEGIBILIDAD` o `PUNTAJE`), no por interfaces de Java.
+- El DRL emite códigos y es solo ASCII. Los textos en español se arman en Java.
+- Los puntajes y umbrales siguen en `application.yml` y llegan al DRL como
+  global. El DRL no lleva números de puntaje.
+- El DRL se compila al arrancar. Si tiene errores, la app no arranca.
+- `version_reglas` = SHA-256 de (configuración canónica + DRL con finales de
+  línea LF + constante de revisión), truncado a 12 caracteres hexadecimales.
+  La constante se sube a mano cuando cambia la lógica en Java o un texto. El
+  test de cierre vigila la lista de reglas del `KieBase` compilado.
 
 ### Formato de errores
-ProblemDetail (RFC 9457), `application/problem+json`, desde un único
-`@RestControllerAdvice`. Los filtros (clave y tamaño) no escriben la respuesta
-por su cuenta: delegan en `HandlerExceptionResolver`, así el advice sigue siendo
-el único lugar que arma errores.
+ProblemDetail (RFC 9457), `application/problem+json;charset=UTF-8`, desde un
+único `@RestControllerAdvice`. Los filtros (clave y tamaño) no escriben la
+respuesta por su cuenta: delegan en `HandlerExceptionResolver`, así el advice
+sigue siendo el único lugar que arma errores.
+
+Los `type` son URN `urn:leads-api:error:<caso>`, en minúsculas, ASCII y con
+guion. Uno por caso, estable y registrado en la spec. Un change que necesita un
+`type` nuevo lo agrega a la spec en ese change. Nunca se usa `about:blank`.
 
 | Estado | `type` | Cuándo |
 | --- | --- | --- |
-| 400 | `validacion` | Campos con errores. Incluye `errores: [{campo, codigo, mensaje}]` |
-| 400 | `json_invalido` | Cuerpo que no es JSON parseable, o número que excede la longitud máxima |
-| 401 | `no_autorizado` | Sin X-API-Key o con una clave incorrecta |
-| 404 | `no_encontrado` | Ruta desconocida (con clave válida) |
-| 405 | `metodo_no_permitido` | Método no soportado (con clave válida) |
-| 413 | `cuerpo_demasiado_grande` | Cuerpo de más de 16 KB |
-| 500 | `error_interno` | Error no previsto, sin detalle interno |
+| 400 | `urn:leads-api:error:validacion` | Campos con errores. Siempre trae al menos un error en `errores: [{campo, codigo, mensaje}]` |
+| 400 | `urn:leads-api:error:json-invalido` | Cuerpo que no es JSON válido, texto suelto, cuerpo vacío, o número que excede la longitud máxima del parser. Nunca trae lista de errores |
+| 401 | `urn:leads-api:error:no-autorizado` | Sin X-API-Key o con una clave incorrecta |
+| 404 | `urn:leads-api:error:no-encontrado` | Ruta desconocida (con clave válida) |
+| 405 | `urn:leads-api:error:metodo-no-permitido` | Método no soportado (con clave válida) |
+| 413 | `urn:leads-api:error:cuerpo-demasiado-grande` | Cuerpo de más de 16 KB |
+| 500 | `urn:leads-api:error:interno` | Error no previsto, sin detalles internos en la respuesta |
 
-Códigos de `errores[].codigo`: `requerido`, `tipo_invalido`, `formato_invalido`,
-`valor_no_permitido`, `fuera_de_rango`. Falta decidir la forma final de las URIs
-de `type`.
+`{}` es JSON válido: va a `validacion`, con un error `requerido` por campo.
+
+Códigos de `errores[].codigo`: `requerido`, `tipo-invalido`, `formato-invalido`,
+`valor-no-permitido`, `fuera-de-rango`. El guion es solo para identificadores
+de error. Los códigos de dominio (`esta_semana`, `1_a_3_meses`, `no_se`) y los
+nombres de campo (`session_id`, `plazo_meses`) siguen con guion bajo porque son
+el contrato con n8n y el Sheet.
 
 ### Paquetes
 Primero por funcionalidad y después por capa, bajo `com.sagant.leads.leads_api`:
@@ -106,8 +150,8 @@ Primero por funcionalidad y después por capa, bajo `com.sagant.leads.leads_api`
 ```
 evaluacion/
   api/        controller, DTO de request y response
-  dominio/    solicitud validada, resultado, motor
-  reglas/     ReglaExcluyente, ReglaPuntaje y una clase por regla
+  dominio/    solicitud validada, resultado, motivos, cálculo del score
+  reglas/     carga del DRL, sesión de Drools, textos de los motivos
   config/     propiedades de reglas, validación de coherencia, version_reglas
 seguridad/    filtro de clave, propiedades
 comun/
@@ -115,34 +159,42 @@ comun/
   web/        filtro de tamaño del cuerpo
 ```
 
+El DRL vive en `src/main/resources/reglas/`.
+
 ### Logging
-Una línea por solicitud con método, ruta, estado y duración. Nunca el cuerpo,
-el header X-API-Key ni los campos extra. Los ejemplos y fixtures de test usan
-datos ficticios.
+- Una línea por evaluación exitosa con `session_id`, prioridad, score y
+  `version_reglas`.
+- Una línea por respuesta de error con el `type` y el estado, más el
+  `session_id` si es válido. En `json-invalido`, 401 y 413 la línea va sin
+  `session_id`.
+- `session_id` se loguea solo si cumple `^[A-Za-z0-9_-]{1,64}$`, y nunca junto
+  a ningún otro campo de la solicitud.
+- Nunca se loguean el cuerpo, los valores recibidos, los mensajes de los
+  errores de campo, el header X-API-Key ni los campos extra.
+- Los ejemplos y fixtures de test usan datos ficticios.
 
 ### Configuración
 - `leads.reglas.*`: `@ConfigurationProperties` con `@Validated`. Umbrales y
   puntajes con BigDecimal donde corresponde. La coherencia (ALTA > MEDIA,
   0,3 < 0,5, etc.) se valida al arrancar.
-- `leads.seguridad.api-key: ${LEADS_API_KEY}` con `@NotBlank`. Los tests usan
-  una clave ficticia.
+- `leads.seguridad.api-key: ${LEADS_API_KEY}`: mínimo 32 caracteres ASCII
+  imprimibles y sin espacios. Si no cumple, la app no arranca y el mensaje no
+  muestra la clave. Sugerencia para generarla: `openssl rand -base64 32`. Los
+  tests usan una clave ficticia.
 - `spring.jackson.factory.constraints.read.max-number-length` (ver notas,
   punto a).
+
+### Comportamiento de negocio confirmado
+Con los puntajes actuales (tabla en las notas técnicas, punto f):
+- con `clearing = si` ninguna solicitud llega a ALTA (máximo 55);
+- un estudiante llega a ALTA solo con el puntaje perfecto (60, justo en el
+  borde);
+- un desempleado nunca llega a ALTA (máximo 50).
 
 ## Preguntas abiertas por change
 
 ### Change 1
-- ¿Clave de API con un filtro propio o con Spring Security? Recomendación:
-  filtro propio, sin agregar dependencias.
-- ¿Forma de las URIs de `type`: `urn:leads-api:error:<caso>` o una URL?
-- ¿Se loguea `session_id`? No identifica a la persona, pero permite
-  correlacionar con Google Sheets.
-- ¿Largo mínimo de `LEADS_API_KEY` al arrancar?
-- ¿El Content-Type de la respuesta declara `charset=UTF-8` o queda sin
-  parámetro (RFC 8259)?
-- ¿Se mantiene lombok si los DTO y la configuración son records?
-- **A confirmar con negocio:** con `clearing = si` ninguna solicitud llega a
-  ALTA (máximo 55). El máximo de estudiante (60) cae justo en el borde de ALTA.
+Ninguna: todas se cerraron en el explore del 2026-10-13.
 
 ### Change 2
 - ¿El motivo "Score ajustado a 0 por inelegibilidad (suma X)" aparece también
@@ -152,8 +204,8 @@ datos ficticios.
 ### Change 3
 - Claves duplicadas en el JSON: ¿400 o gana la última? Se puede activar
   `spring.jackson.read.strict-duplicate-detection`.
-- Un string numérico negativo ("-5"): ¿se informa como `formato_invalido` o
-  como `fuera_de_rango`?
+- Un string numérico negativo ("-5"): ¿se informa como `formato-invalido` o
+  como `fuera-de-rango`?
 
 ### Change 4
 - ¿Un Content-Length mayor a 16 KB se rechaza antes de leer? Recomendación:
@@ -161,5 +213,5 @@ datos ficticios.
 - Borde exacto: 16384 bytes pasa y 16385 da 413. Falta confirmarlo.
 
 ## Próximo paso
-Crear `change/leads-api-crear-evaluacion-puntaje` y correr
-`/opsx:propose leads-api-crear-evaluacion-puntaje`.
+Correr `/opsx:propose leads-api-crear-evaluacion-puntaje` en el branch
+`change/leads-api-crear-evaluacion-puntaje`.
