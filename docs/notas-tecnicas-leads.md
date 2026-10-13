@@ -74,7 +74,7 @@ cubren la regex y `max-string-length`.
 
 ## b. Límite del cuerpo de 16 KB
 
-**Pieza:** un `OncePerRequestFilter` propio (`comun/web`). Envuelve el request
+**Pieza:** un `OncePerRequestFilter` propio (`comun/filter`). Envuelve el request
 en un `HttpServletRequestWrapper` cuyo `getInputStream()` devuelve un
 `ServletInputStream` que cuenta los bytes leídos. Al superar 16384 bytes lanza
 `CuerpoDemasiadoGrandeException`.
@@ -227,6 +227,63 @@ lo evita, pero esa clase es interna (`org.drools.io`), no de `kie-api`.
 **Decisión resultante:** el DRL emite códigos y es solo ASCII; los textos en
 español se arman en Java. Así el problema no puede aparecer. Un test del
 change 1 verifica que el DRL no contiene caracteres fuera de ASCII.
+
+**Restricciones con globals (tarea 3.2 del change 1):** el spike no había
+probado llamar a un método del hecho con un global como argumento dentro de
+la restricción, por ejemplo `Solicitud( cargaNoSupera(umbrales.carga().baja()) )`.
+Funciona con Drools 10.2.0 (dialecto MVEL): los 5 bordes de carga dan el tramo
+correcto y todas las reglas de carga y antigüedad usan esa forma. No hizo
+falta la alternativa del design (variables enlazadas).
+
+## Correr el servicio en desarrollo
+
+Comandos para PowerShell en Windows, verificados el 2026-10-13 tal como están
+escritos (salvo ngrok, ver abajo).
+
+**1. Generar una clave de API** (32 bytes aleatorios en base64, 44 caracteres
+ASCII sin espacios). La misma clave va en el nodo HTTP de n8n, en el header
+`X-API-Key`. No se guarda en el repo.
+
+```powershell
+$bytes = New-Object byte[] 32; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes); $env:LEADS_API_KEY = [Convert]::ToBase64String($bytes)
+```
+
+`$env:LEADS_API_KEY` vale solo para esa ventana de PowerShell. Para
+reutilizar una clave que ya está en n8n: `$env:LEADS_API_KEY = "<la clave>"`.
+Con openssl (Git Bash): `openssl rand -base64 32`.
+
+**2. Arrancar el servicio** (puerto 8080). Si falta la clave o no cumple
+(menos de 32 caracteres, espacios o caracteres fuera de ASCII imprimible), la
+aplicación no arranca y dice por qué, sin mostrar la clave.
+
+```powershell
+.\mvnw.cmd spring-boot:run
+```
+
+**3. Probar con una solicitud ficticia**, desde otra ventana con la misma
+`$env:LEADS_API_KEY`:
+
+```powershell
+$cuerpo = '{"session_id":"sesion-de-prueba-1","edad":32,"motivo":"auto","monto":150000,"plazo_meses":24,"urgencia":"esta_semana","situacion_laboral":"dependiente","antiguedad_meses":36,"ingreso_mensual":60000,"cuota_deudas":5000,"clearing":"no","documentacion":"si"}'
+Invoke-RestMethod -Method Post -Uri http://localhost:8080/evaluar -Headers @{ "X-API-Key" = $env:LEADS_API_KEY } -ContentType "application/json" -Body $cuerpo | ConvertTo-Json
+```
+
+Respuesta esperada: `prioridad` ALTA, `score` 85, 7 motivos y un
+`version_reglas`. Sin el header responde 401. En el log queda una sola línea
+de evaluación (`evaluacion session_id=... prioridad=ALTA score=85
+version_reglas=...`); la clave no aparece en el log.
+
+**4. Exponerlo con ngrok** para que n8n Cloud lo alcance:
+
+```powershell
+ngrok http 8080
+```
+
+En n8n, la URL del nodo HTTP es la URL pública que muestra ngrok más
+`/evaluar`, con método POST, `Content-Type: application/json` y el header
+`X-API-Key`. **No verificado:** ngrok no estaba instalado en la máquina donde
+se probaron los pasos 1 a 3. Hasta cerrar `leads-api-limitar-tamano-cuerpo`
+el servicio no limita el tamaño del cuerpo (ver roadmap, "Riesgo de orden").
 
 ## Otras notas
 

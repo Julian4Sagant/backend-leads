@@ -60,8 +60,8 @@ verde.
 
 ## 7. Documentación
 
-- [ ] 7.1 Actualizar `docs/roadmap.md`: agregar `tipo-de-contenido-no-soportado` (415) a la tabla de `type`, indicar que el header Accept se ignora, mover los bordes de rangos (decisión 15) del change 3 al change 1, anotar en el change 2 que modifica con un MODIFIED el requirement «Orden y forma de los motivos» (8 motivos, 9 con recorte o inelegibilidad) y marcar el change 1 como implementado; verificar que el roadmap no contradice las specs
-- [ ] 7.2 Documentar en `docs/notas-tecnicas-leads.md` cómo correr el servicio en desarrollo (`LEADS_API_KEY`, ngrok) y el resultado de la tarea 3.2 sobre restricciones con globals; verificar que los comandos documentados funcionan tal como están escritos
+- [x] 7.1 Actualizar `docs/roadmap.md`: agregar `tipo-de-contenido-no-soportado` (415) a la tabla de `type`, indicar que el header Accept se ignora, mover los bordes de rangos (decisión 15) del change 3 al change 1, anotar en el change 2 que modifica con un MODIFIED el requirement «Orden y forma de los motivos» (8 motivos, 9 con recorte o inelegibilidad) y marcar el change 1 como implementado; verificar que el roadmap no contradice las specs
+- [x] 7.2 Documentar en `docs/notas-tecnicas-leads.md` cómo correr el servicio en desarrollo (`LEADS_API_KEY`, ngrok) y el resultado de la tarea 3.2 sobre restricciones con globals; verificar que los comandos documentados funcionan tal como están escritos
 
 ## 8. Cierre
 
