@@ -19,14 +19,14 @@ verde.
 
 ## 3. Motor de reglas con Drools
 
-- [ ] 3.1 Crear `Solicitud` (record con enums de códigos y mapeo explícito a los valores del contrato), `Resultado`, `Motivo` y `cargaNoSupera(BigDecimal)`; verificar con un test de tabla el mapeo de cada código y `cargaNoSupera` en 0,3 y 0,5 exactos
-- [ ] 3.2 Crear el bean `KieBase` de D1 y escribir primero las 3 reglas de carga del DRL con el global `umbrales` en la restricción; verificar con un test de tabla los bordes de carga (exactamente 0,3; 0,3 + 0,01 de cuota; exactamente 0,5; 0,5 + 0,01 de cuota; ingreso 0). Si la restricción con global falla, aplicar la mitigación del design y anotarla en design.md
-- [ ] 3.3 Escribir las reglas DRL de urgencia, documentación, destino, situación laboral, antigüedad y clearing con sus `@regla`; verificar con una tabla de casos por regla, incluidos los bordes de antigüedad 5, 6, 11 y 12, que cada tramo emite su código y sus puntos
-- [ ] 3.4 Test "exactamente un motivo por regla de negocio" sobre todas las combinaciones de códigos y tramos; verificar que cada solicitud produce 7 motivos con 7 `@regla` distintas
-- [ ] 3.5 Test de que el DRL no tiene bytes fuera de ASCII ni números de puntaje o umbral; verificar que falla al agregar "ñ" o un número a una copia de prueba
-- [ ] 3.6 Crear los textos de motivos de D3 y el formato `+N`/`-N`/`0`; verificar con una tabla de casos que cada `(regla, codigo, puntos)` da el texto exacto de la spec y que ningún texto contiene U+2212
-- [ ] 3.7 Crear el cálculo de D5 (verificación de un motivo por regla, orden, suma, recorte con su motivo y prioridad); verificar con una tabla de casos sumas -55, 0, 100 y 105 y scores 60, 59, 30 y 29 con configuración de prueba
-- [ ] 3.8 Test que verifica el orden completo de los motivos y que el motivo final de recorte aparece una sola vez y al final; verificar que sin recorte hay 7 motivos y con recorte 8, con una suma negativa y una suma mayor que 100
+- [x] 3.1 Crear `Solicitud` (record con enums de códigos y mapeo explícito a los valores del contrato), `Resultado`, `Motivo` y `cargaNoSupera(BigDecimal)`; verificar con un test de tabla el mapeo de cada código y `cargaNoSupera` en 0,3 y 0,5 exactos
+- [x] 3.2 Crear el bean `KieBase` de D1 y escribir primero las 3 reglas de carga del DRL con el global `umbrales` en la restricción; verificar con un test de tabla los bordes de carga (exactamente 0,3; 0,3 + 0,01 de cuota; exactamente 0,5; 0,5 + 0,01 de cuota; ingreso 0). Si la restricción con global falla, aplicar la mitigación del design y anotarla en design.md
+- [x] 3.3 Escribir las reglas DRL de urgencia, documentación, destino, situación laboral, antigüedad y clearing con sus `@regla`; verificar con una tabla de casos por regla, incluidos los bordes de antigüedad 5, 6, 11 y 12, que cada tramo emite su código y sus puntos
+- [x] 3.4 Test "exactamente un motivo por regla de negocio" sobre todas las combinaciones de códigos y tramos; verificar que cada solicitud produce 7 motivos con 7 `@regla` distintas
+- [x] 3.5 Test de que el DRL no tiene bytes fuera de ASCII ni números de puntaje o umbral; verificar que falla al agregar "ñ" o un número a una copia de prueba
+- [x] 3.6 Crear los textos de motivos de D3 y el formato `+N`/`-N`/`0`; verificar con una tabla de casos que cada `(regla, codigo, puntos)` da el texto exacto de la spec y que ningún texto contiene U+2212
+- [x] 3.7 Crear el cálculo de D5 (verificación de un motivo por regla, orden, suma, recorte con su motivo y prioridad); verificar con una tabla de casos sumas -55, 0, 100 y 105 y scores 60, 59, 30 y 29 con configuración de prueba
+- [x] 3.8 Test que verifica el orden completo de los motivos y que el motivo final de recorte aparece una sola vez y al final; verificar que sin recorte hay 7 motivos y con recorte 8, con una suma negativa y una suma mayor que 100
 
 ## 4. version_reglas
 
