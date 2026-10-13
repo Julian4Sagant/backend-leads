@@ -7,9 +7,9 @@ verde.
 
 ## 1. Base del proyecto y build
 
-- [ ] 1.1 Sacar lombok y su `annotationProcessorPaths` de las dos ejecuciones del compilador en `pom.xml`; verificar que `./mvnw -q dependency:tree` no lista lombok
-- [ ] 1.2 Importar `org.drools:drools-bom:10.2.0` y agregar `drools-engine` y `drools-mvel`; verificar con `./mvnw dependency:tree` que no entra `com.fasterxml.jackson.core:jackson-databind`
-- [ ] 1.3 Reemplazar `application.properties` por `application.yml` con la configuración de D7 y agregar una clave ficticia de test (40 caracteres) en la configuración de test; verificar que `contextLoads` pasa con `./mvnw test`
+- [x] 1.1 Sacar lombok y su `annotationProcessorPaths` de las dos ejecuciones del compilador en `pom.xml`; verificar que `./mvnw -q dependency:tree` no lista lombok
+- [x] 1.2 Importar `org.drools:drools-bom:10.2.0` y agregar `drools-engine` y `drools-mvel`; verificar con `./mvnw dependency:tree` que no entra `com.fasterxml.jackson.core:jackson-databind`
+- [x] 1.3 Reemplazar `application.properties` por `application.yml` con la configuración de D7 y agregar una clave ficticia de test (40 caracteres) en la configuración de test; verificar que `contextLoads` pasa con `./mvnw test`
 
 ## 2. Configuración de reglas
 

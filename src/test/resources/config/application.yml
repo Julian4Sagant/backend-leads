@@ -1,0 +1,4 @@
+# Configuración solo para tests. La clave es ficticia y no se usa fuera de los tests.
+leads:
+  seguridad:
+    api-key: clave-ficticia-de-prueba-0123456789abcdef
