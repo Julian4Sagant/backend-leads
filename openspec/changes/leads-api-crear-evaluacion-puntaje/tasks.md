@@ -26,7 +26,7 @@ verde.
 - [ ] 3.5 Test de que el DRL no tiene bytes fuera de ASCII ni números de puntaje o umbral; verificar que falla al agregar "ñ" o un número a una copia de prueba
 - [ ] 3.6 Crear los textos de motivos de D3 y el formato `+N`/`-N`/`0`; verificar con una tabla de casos que cada `(regla, codigo, puntos)` da el texto exacto de la spec y que ningún texto contiene U+2212
 - [ ] 3.7 Crear el cálculo de D5 (verificación de un motivo por regla, orden, suma, recorte con su motivo y prioridad); verificar con una tabla de casos sumas -55, 0, 100 y 105 y scores 60, 59, 30 y 29 con configuración de prueba
-- [ ] 3.8 Test que verifica el orden completo de los motivos y que el motivo final de recorte aparece una sola vez y al final; verificar con una suma negativa y una suma mayor que 100
+- [ ] 3.8 Test que verifica el orden completo de los motivos y que el motivo final de recorte aparece una sola vez y al final; verificar que sin recorte hay 7 motivos y con recorte 8, con una suma negativa y una suma mayor que 100
 
 ## 4. version_reglas
 
@@ -60,7 +60,7 @@ verde.
 
 ## 7. Documentación
 
-- [ ] 7.1 Actualizar `docs/roadmap.md`: agregar `tipo-de-contenido-no-soportado` (415) a la tabla de `type`, indicar que el header Accept se ignora, mover los bordes de rangos (decisión 15) del change 3 al change 1 y marcar el change 1 como implementado; verificar que el roadmap no contradice las specs
+- [ ] 7.1 Actualizar `docs/roadmap.md`: agregar `tipo-de-contenido-no-soportado` (415) a la tabla de `type`, indicar que el header Accept se ignora, mover los bordes de rangos (decisión 15) del change 3 al change 1, anotar en el change 2 que modifica con un MODIFIED el requirement «Orden y forma de los motivos» (8 motivos, 9 con recorte o inelegibilidad) y marcar el change 1 como implementado; verificar que el roadmap no contradice las specs
 - [ ] 7.2 Documentar en `docs/notas-tecnicas-leads.md` cómo correr el servicio en desarrollo (`LEADS_API_KEY`, ngrok) y el resultado de la tarea 3.2 sobre restricciones con globals; verificar que los comandos documentados funcionan tal como están escritos
 
 ## 8. Cierre

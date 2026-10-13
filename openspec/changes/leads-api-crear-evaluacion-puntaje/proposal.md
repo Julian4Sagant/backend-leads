@@ -103,35 +103,42 @@ de 2026-10-09) y en el explore del change 1 (2026-10-13):
   junto al `type` y el estado del error; nunca valores del cuerpo.
 - `charset=UTF-8` explícito en las dos respuestas. Se saca lombok.
 
+Confirmadas por Julian en la revisión de la propuesta (paso 6 del flujo):
+
+- **Textos de los motivos** de urgencia, destino no definido, antigüedad y
+  clearing tal como están en la spec `evaluacion-leads`. Situación laboral:
+  "Empleado en relación de dependencia: +15", "Trabajador independiente:
+  +10", "Jubilado: +15", "Estudiante: 0" y "Desempleado: -10".
+  Documentación: "Documentación de ingresos disponible: +15" y "Sin
+  documentación de ingresos: 0".
+- **Formato del puntaje en el texto:** `+N` si es positivo, `-N` si es
+  negativo y `0` sin signo.
+- **Números en este change:** se aceptan como número JSON o string numérico;
+  se rechazan los que no son decimales, los enteros con parte decimal y los
+  importes con más de 2 decimales o 12 dígitos enteros. Las regex exactas y
+  los casos de la decisión 13 (`1e3`, `+5`, `.5`, espacios, etc.) quedan para
+  `leads-api-endurecer-formato-numerico`.
+- **Bordes de rangos (decisión 15) en este change** y no en el change 3,
+  porque las reglas de la spec piden escenario en el borde de cada límite.
+- **Códigos de dominio exactos:** distinguen mayúsculas y no se recortan
+  espacios (`"Auto"` y `" auto"` son `valor-no-permitido`).
+- **`cuerpo-demasiado-grande`** queda registrado en el catálogo de `type`
+  desde este change; su comportamiento llega con
+  `leads-api-limitar-tamano-cuerpo`.
+- **JSON válido que no es un objeto** (por ejemplo `[1, 2]`) da
+  `validacion` con `tipo-invalido` en el campo `$`, no `json-invalido`,
+  porque el cuerpo sí se pudo leer como JSON.
+- **Los textos de los errores de campo (`mensaje`) no son contrato:** n8n
+  decide solo por `type` y `codigo`.
+- **Cantidad de motivos:** cada regla de puntaje emite siempre exactamente un
+  motivo, también cuando suma 0. En este change la respuesta tiene 7 motivos
+  (8 con recorte). `leads-api-agregar-elegibilidad-edad` agrega el motivo
+  excluyente al principio y modifica el requirement de orden con un
+  MODIFIED: 8 motivos (9 con recorte o inelegibilidad), con sus tests.
+
 ## Supuestos pendientes
 
-Propuestos en este change; necesitan confirmación antes de aprobar:
-
-1. **Textos de los motivos** que la especificación no fijó (urgencia,
-   documentación, destino no definido, situación laboral, antigüedad y
-   clearing). Están en la spec `evaluacion-leads`, requirement de cada regla.
-2. **Cada regla de puntaje emite siempre exactamente un motivo**, también
-   cuando suma 0 (por ejemplo "Sin documentación: 0").
-3. **Formato del puntaje en el texto:** `+N` si es positivo, `-N` si es
-   negativo y `0` sin signo.
-4. **Números en este change:** se aceptan como número JSON o string numérico;
-   se rechazan los que no son decimales, los enteros con parte decimal y los
-   importes con más de 2 decimales o 12 dígitos enteros. Las regex exactas y
-   los casos de la decisión 13 (`1e3`, `+5`, `.5`, espacios, etc.) quedan para
-   `leads-api-endurecer-formato-numerico`.
-5. **Bordes de rangos (decisión 15) en este change** y no en el change 3,
-   porque las reglas de la spec piden escenario en el borde de cada límite.
-6. **Códigos de dominio exactos:** distinguen mayúsculas y no se recortan
-   espacios (`"Auto"` y `" auto"` son `valor-no-permitido`).
-7. **`cuerpo-demasiado-grande`** queda registrado en el catálogo de `type`
-   desde este change, pero su comportamiento llega con
-   `leads-api-limitar-tamano-cuerpo`.
-8. **JSON válido que no es un objeto** (por ejemplo `[1, 2]`) da
-   `validacion` con `tipo-invalido` en el campo `$`, no `json-invalido`,
-   porque el cuerpo sí se pudo leer como JSON.
-9. **Textos de los errores de campo (`mensaje`)**: los define el diseño y no
-   forman parte del contrato; n8n debe decidir por `type` y `codigo`, nunca
-   por el texto.
+Ninguno.
 
 ## Fuera de alcance
 

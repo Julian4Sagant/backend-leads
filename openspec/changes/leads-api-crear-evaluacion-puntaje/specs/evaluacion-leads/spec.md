@@ -262,16 +262,18 @@ mes: +15", "Urgencia de 1 a 3 meses: +5" y "Sin urgencia: 0".
 - **THEN** responde 400 `validacion` con `valor-no-permitido` en `urgencia` y sin `motivos`
 
 ### Requirement: Regla de documentación
-La regla "Documentación" SHALL sumar +15 si `documentacion` es si y 0 si es no,
-con los motivos "Documentación disponible: +15" y "Sin documentación: 0".
+La regla "Documentación" SHALL sumar +15 si `documentacion` es si y 0 si es
+no, con los motivos "Documentación de ingresos disponible: +15" y "Sin
+documentación de ingresos: 0". `documentacion` se refiere a documentación de
+ingresos.
 
 #### Scenario: Con documentación
 - **WHEN** se envía POST /evaluar con la solicitud base
-- **THEN** responde 200 y `motivos` incluye "Documentación disponible: +15"
+- **THEN** responde 200 y `motivos` incluye "Documentación de ingresos disponible: +15"
 
 #### Scenario: Sin documentación
 - **WHEN** se envía POST /evaluar con la solicitud base y `documentacion` "no"
-- **THEN** responde 200 con `score` 70 y `motivos` incluye "Sin documentación: 0"
+- **THEN** responde 200 con `score` 70 y `motivos` incluye "Sin documentación de ingresos: 0"
 
 #### Scenario: Documentación inválida
 - **WHEN** se envía POST /evaluar con la solicitud base y `documentacion` "tal_vez"
@@ -297,28 +299,29 @@ para no confundir el campo `motivo` con la lista `motivos`.
 
 ### Requirement: Regla de situación laboral
 La regla "Situación laboral" SHALL sumar dependiente +15, independiente +10,
-jubilado +15, estudiante 0 y desempleado -10, con el motivo "Situación laboral
-<valor>: <puntos>" (por ejemplo "Situación laboral dependiente: +15").
+jubilado +15, estudiante 0 y desempleado -10, con los motivos "Empleado en
+relación de dependencia: +15", "Trabajador independiente: +10", "Jubilado:
++15", "Estudiante: 0" y "Desempleado: -10".
 
 #### Scenario: Dependiente
 - **WHEN** se envía POST /evaluar con la solicitud base
-- **THEN** responde 200 y `motivos` incluye "Situación laboral dependiente: +15"
+- **THEN** responde 200 y `motivos` incluye "Empleado en relación de dependencia: +15"
 
 #### Scenario: Independiente
 - **WHEN** se envía POST /evaluar con la solicitud base y `situacion_laboral` "independiente"
-- **THEN** responde 200 con `score` 80 y `motivos` incluye "Situación laboral independiente: +10"
+- **THEN** responde 200 con `score` 80 y `motivos` incluye "Trabajador independiente: +10"
 
 #### Scenario: Jubilado
 - **WHEN** se envía POST /evaluar con la solicitud base, `situacion_laboral` "jubilado" y `antiguedad_meses` 0
-- **THEN** responde 200 con `score` 75 y `motivos` incluye "Situación laboral jubilado: +15"
+- **THEN** responde 200 con `score` 75 y `motivos` incluye "Jubilado: +15"
 
 #### Scenario: Estudiante
 - **WHEN** se envía POST /evaluar con la solicitud base, `situacion_laboral` "estudiante" y `antiguedad_meses` 0
-- **THEN** responde 200 con `score` 60 y `motivos` incluye "Situación laboral estudiante: 0"
+- **THEN** responde 200 con `score` 60 y `motivos` incluye "Estudiante: 0"
 
 #### Scenario: Desempleado
 - **WHEN** se envía POST /evaluar con la solicitud base, `situacion_laboral` "desempleado" y `antiguedad_meses` 0
-- **THEN** responde 200 con `score` 50 y `motivos` incluye "Situación laboral desempleado: -10"
+- **THEN** responde 200 con `score` 50 y `motivos` incluye "Desempleado: -10"
 
 #### Scenario: Situación laboral inválida
 - **WHEN** se envía POST /evaluar con la solicitud base y `situacion_laboral` "monotributista"
@@ -477,12 +480,14 @@ así que los bordes 59 y 29 se prueban con una configuración de prueba.
 `motivos` SHALL listar exactamente un motivo por regla de puntaje, también
 cuando suma 0, en este orden: urgencia, documentación, destino del préstamo,
 situación laboral, antigüedad, clearing, carga; y al final, si corresponde, un
-único motivo de recorte. La suma de los puntos de los motivos de puntaje MUST
-reproducir la suma antes del recorte.
+único motivo de recorte: 7 motivos, u 8 con recorte. La suma de los puntos de
+los motivos de puntaje MUST reproducir la suma antes del recorte. El change
+`leads-api-agregar-elegibilidad-edad` agrega el motivo excluyente al
+principio.
 
 #### Scenario: Orden completo de la solicitud base
 - **WHEN** se envía POST /evaluar con la solicitud base
-- **THEN** responde 200 con `motivos` exactamente: "Urgencia esta semana: +20", "Documentación disponible: +15", "Destino del préstamo definido: +5", "Situación laboral dependiente: +15", "Antigüedad laboral de 12 meses o más: +10", "No figura en el Clearing de Informes: 0", "Carga de deuda hasta el 30% del ingreso: +20"
+- **THEN** responde 200 con `motivos` exactamente: "Urgencia esta semana: +20", "Documentación de ingresos disponible: +15", "Destino del préstamo definido: +5", "Empleado en relación de dependencia: +15", "Antigüedad laboral de 12 meses o más: +10", "No figura en el Clearing de Informes: 0", "Carga de deuda hasta el 30% del ingreso: +20"
 
 #### Scenario: Motivo de recorte al final y una sola vez
 - **WHEN** se envía POST /evaluar con la solicitud del escenario "Suma negativa"
