@@ -10,13 +10,13 @@
 
 package reglas;
 
-import com.sagant.leads.leads_api.evaluacion.dominio.Clearing;
-import com.sagant.leads.leads_api.evaluacion.dominio.Destino;
-import com.sagant.leads.leads_api.evaluacion.dominio.Documentacion;
-import com.sagant.leads.leads_api.evaluacion.dominio.Resultado;
-import com.sagant.leads.leads_api.evaluacion.dominio.SituacionLaboral;
-import com.sagant.leads.leads_api.evaluacion.dominio.Solicitud;
-import com.sagant.leads.leads_api.evaluacion.dominio.Urgencia;
+import com.sagant.leads.leads_api.evaluacion.enums.Clearing;
+import com.sagant.leads.leads_api.evaluacion.enums.Destino;
+import com.sagant.leads.leads_api.evaluacion.enums.Documentacion;
+import com.sagant.leads.leads_api.evaluacion.enums.SituacionLaboral;
+import com.sagant.leads.leads_api.evaluacion.enums.Urgencia;
+import com.sagant.leads.leads_api.evaluacion.model.Resultado;
+import com.sagant.leads.leads_api.evaluacion.model.Solicitud;
 
 global com.sagant.leads.leads_api.evaluacion.config.ReglasProperties.Umbrales umbrales;
 global com.sagant.leads.leads_api.evaluacion.config.ReglasProperties.Puntajes puntajes;
