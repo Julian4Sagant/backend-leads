@@ -256,6 +256,9 @@ Ninguna: todas se cerraron en el explore del 2026-10-13 (ver el change 2).
 
 ## Pendientes fuera del plan
 
+La operación actual (servicio en una PC, ngrok y el flujo de n8n) está en
+[integracion-n8n.md](integracion-n8n.md).
+
 Surgieron después del change 1 y todavía no tienen change ni decisión:
 - **Que el servicio no dependa de una PC.** Hoy corre en una computadora local
   expuesta con ngrok: si se apaga o se corta ngrok, los leads quedan en

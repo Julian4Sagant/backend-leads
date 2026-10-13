@@ -287,22 +287,17 @@ $cuerpo = '{"session_id":"sesion-de-prueba-1","edad":32,"motivo":"auto","monto":
 Invoke-RestMethod -Method Post -Uri http://localhost:8080/evaluar -Headers @{ "X-API-Key" = $env:LEADS_API_KEY } -ContentType "application/json" -Body $cuerpo | ConvertTo-Json
 ```
 
-Respuesta esperada: `prioridad` ALTA, `score` 85, 7 motivos y un
+Respuesta esperada: `prioridad` ALTA, `score` 85, 8 motivos y un
 `version_reglas`. Sin el header responde 401. En el log queda una sola línea
 de evaluación (`evaluacion session_id=... prioridad=ALTA score=85
 version_reglas=...`); la clave no aparece en el log.
 
-**4. Exponerlo con ngrok** para que n8n Cloud lo alcance:
-
-```powershell
-ngrok http 8080
-```
-
-En n8n, la URL del nodo HTTP es la URL pública que muestra ngrok más
-`/evaluar`, con método POST, `Content-Type: application/json` y el header
-`X-API-Key`. **No verificado:** ngrok no estaba instalado en la máquina donde
-se probaron los pasos 1 a 3. Hasta cerrar `leads-api-limitar-tamano-cuerpo`
-el servicio no limita el tamaño del cuerpo (ver roadmap, "Riesgo de orden").
+**4. Exponerlo con ngrok y conectarlo con n8n:** está en
+[integracion-n8n.md](integracion-n8n.md), verificado de punta a punta el
+2026-10-13. Ahí está también cómo guardar la clave como variable de usuario de
+Windows para no copiarla entre terminales. Hasta cerrar
+`leads-api-limitar-tamano-cuerpo` el servicio no limita el tamaño del cuerpo
+(ver roadmap, "Riesgo de orden").
 
 ## Otras notas
 
