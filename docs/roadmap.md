@@ -7,8 +7,8 @@ actualizó con el explore del change 1 (2026-10-13), que eligió Drools como
 motor de reglas. Las verificaciones técnicas están en
 [notas-tecnicas-leads.md](notas-tecnicas-leads.md).
 
-Estado: change 1 implementado, en revisión (`change/leads-api-crear-evaluacion-puntaje`).
-`openspec/specs/` todavía está vacío: se completa al archivar el change 1.
+Estado: change 1 archivado (`openspec/changes/archive/2026-10-13-leads-api-crear-evaluacion-puntaje`).
+`openspec/specs/` tiene `acceso-api` y `evaluacion-leads`.
 
 ## Capabilities
 
@@ -37,7 +37,7 @@ un solo lugar. `evaluacion-leads` la referencia.
   Orden recomendado: 1, 2, 3, 4.  2, 3 y 4 dependen solo de 1.
 ```
 
-### 1. `leads-api-crear-evaluacion-puntaje` (implementado, en revisión)
+### 1. `leads-api-crear-evaluacion-puntaje` (archivado)
 Rebanada base: POST /evaluar de punta a punta.
 - Clave de API con un filtro propio, sin Spring Security (401; la app no
   arranca sin `LEADS_API_KEY` o con una clave de menos de 32 caracteres, con
@@ -234,6 +234,6 @@ Ninguna: todas se cerraron en el explore del 2026-10-13.
 - Borde exacto: 16384 bytes pasa y 16385 da 413. Falta confirmarlo.
 
 ## Próximo paso
-Cerrar el change 1: revisión del código en su PR y `/opsx:archive`. Después,
+Mergear el PR del change 1 y actualizar n8n con el contrato nuevo. Después,
 el explore del change siguiente. Si el servicio se va a exponer por ngrok,
 conviene que ese sea el change 4 (límite de tamaño del cuerpo).
