@@ -35,9 +35,9 @@ verde.
 
 ## 5. Lectura y validación de la solicitud
 
-- [ ] 5.1 Crear `SolicitudCruda` y su deserializador de D6 (tipo de token y texto original por campo, raíz no objeto, campos extra descartados); verificar con tests unitarios de deserialización que `150000`, `"150000"`, `150000.00`, `true`, `[]`, `null` y un campo ausente se distinguen
-- [ ] 5.2 Crear el validador de D6 con los códigos de error y el orden de campo; verificar con una tabla de casos cada `codigo` en cada tipo de campo, incluidos los bordes de rango de la spec y los límites de 12 dígitos enteros y 2 decimales
-- [ ] 5.3 Guardar el `session_id` válido en un atributo del request (D11); verificar con un test unitario que un `session_id` con salto de línea, vacío o de 65 caracteres no se guarda
+- [x] 5.1 Crear `SolicitudCruda` y su deserializador de D6 (tipo de token y texto original por campo, raíz no objeto, campos extra descartados); verificar con tests unitarios de deserialización que `150000`, `"150000"`, `150000.00`, `true`, `[]`, `null` y un campo ausente se distinguen
+- [x] 5.2 Crear el validador de D6 con los códigos de error y el orden de campo; verificar con una tabla de casos cada `codigo` en cada tipo de campo, incluidos los bordes de rango de la spec y los límites de 12 dígitos enteros y 2 decimales
+- [x] 5.3 Guardar el `session_id` válido en un atributo del request (D11); verificar con un test unitario que un `session_id` con salto de línea, vacío o de 65 caracteres no se guarda
 
 ## 6. Endpoint, errores y clave de API
 

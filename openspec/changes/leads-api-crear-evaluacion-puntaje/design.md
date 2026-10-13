@@ -277,9 +277,10 @@ Un `@RestControllerAdvice` que extiende `ResponseEntityExceptionHandler`:
 
 ```
 com.sagant.leads.leads_api
-  evaluacion/api/       controller, SolicitudCruda y su deserializador, respuesta
+  evaluacion/api/       controller, SolicitudCruda y su deserializador, validador
+                        (traduce el contrato a Solicitud), respuesta
   evaluacion/dominio/   Solicitud, enums de códigos, Resultado, Motivo, cálculo
-                        de score y prioridad, validador
+                        de score y prioridad
   evaluacion/reglas/    KieBase, ejecución de la sesión, textos de motivos,
                         version_reglas
   evaluacion/config/    records de leads.reglas y su validación de coherencia
