@@ -30,8 +30,8 @@ verde.
 
 ## 4. version_reglas
 
-- [ ] 4.1 Implementar el cálculo de D8 al arrancar; verificar con tests unitarios que da 12 hex en minúscula, que es igual con la misma entrada, que cambia con un puntaje distinto o un DRL distinto, que 20 y 20.0 dan lo mismo y que CRLF y LF dan lo mismo
-- [ ] 4.2 Test de cierre de D8 sobre la lista de reglas DRL y sus `@regla` del `KieBase`; verificar que falla al agregar una regla de prueba sin subir `REVISION_LOGICA` y pasa al subirla
+- [x] 4.1 Implementar el cálculo de D8 al arrancar; verificar con tests unitarios que da 12 hex en minúscula, que es igual con la misma entrada, que cambia con un puntaje distinto o un DRL distinto, que 20 y 20.0 dan lo mismo y que CRLF y LF dan lo mismo
+- [x] 4.2 Test de cierre de D8 sobre la lista de reglas DRL y sus `@regla` del `KieBase`; verificar que falla al agregar una regla de prueba sin subir `REVISION_LOGICA` y pasa al subirla
 
 ## 5. Lectura y validación de la solicitud
 

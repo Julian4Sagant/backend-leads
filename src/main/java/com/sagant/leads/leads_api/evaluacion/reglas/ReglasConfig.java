@@ -31,4 +31,10 @@ public class ReglasConfig {
 	KieBase kieBase(ArchivoReglas archivo) {
 		return CompiladorReglas.compilar(archivo.contenido());
 	}
+
+	/** Se calcula una sola vez, al arrancar. */
+	@Bean
+	VersionReglas versionReglas(ReglasProperties reglas, ArchivoReglas archivo) {
+		return VersionReglas.calcular(reglas, archivo.contenido());
+	}
 }
