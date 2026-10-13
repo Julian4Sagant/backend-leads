@@ -1,0 +1,253 @@
+// Reglas de evaluacion de leads-api.
+//
+// Este archivo es solo ASCII y no contiene numeros de negocio: los puntos salen del
+// global "puntajes" y los limites de los tramos del global "umbrales", ambos de
+// application.yml. Por eso los tramos se nombran baja/media/alta y no con sus valores.
+//
+// Cada regla de negocio es un grupo de reglas DRL mutuamente excluyentes que comparten
+// @regla; exactamente una de cada grupo dispara por solicitud. Cada una emite
+// (regla, codigo, puntos); los textos en espanol y el orden los resuelve Java.
+
+package reglas;
+
+import com.sagant.leads.leads_api.evaluacion.enums.Clearing;
+import com.sagant.leads.leads_api.evaluacion.enums.Destino;
+import com.sagant.leads.leads_api.evaluacion.enums.Documentacion;
+import com.sagant.leads.leads_api.evaluacion.enums.SituacionLaboral;
+import com.sagant.leads.leads_api.evaluacion.enums.Urgencia;
+import com.sagant.leads.leads_api.evaluacion.model.Resultado;
+import com.sagant.leads.leads_api.evaluacion.model.Solicitud;
+
+global com.sagant.leads.leads_api.evaluacion.config.ReglasProperties.Umbrales umbrales;
+global com.sagant.leads.leads_api.evaluacion.config.ReglasProperties.Puntajes puntajes;
+
+// Agrega el motivo con el @regla de la regla que disparo.
+function void emitir(org.kie.api.runtime.rule.RuleContext contexto, Resultado resultado,
+        String codigo, java.math.BigDecimal puntos) {
+    resultado.agregar((String) contexto.getRule().getMetaData().get("regla"), codigo, puntos);
+}
+
+// ---- Urgencia ----
+
+rule "urgencia-esta-semana"
+    @regla("urgencia")
+when
+    Solicitud( urgencia == Urgencia.ESTA_SEMANA )
+    $r : Resultado()
+then
+    emitir(drools, $r, "esta-semana", puntajes.urgencia().estaSemana());
+end
+
+rule "urgencia-este-mes"
+    @regla("urgencia")
+when
+    Solicitud( urgencia == Urgencia.ESTE_MES )
+    $r : Resultado()
+then
+    emitir(drools, $r, "este-mes", puntajes.urgencia().esteMes());
+end
+
+rule "urgencia-1-a-3-meses"
+    @regla("urgencia")
+when
+    Solicitud( urgencia == Urgencia.DE_1_A_3_MESES )
+    $r : Resultado()
+then
+    emitir(drools, $r, "1-a-3-meses", puntajes.urgencia().de1A3Meses());
+end
+
+rule "urgencia-sin-apuro"
+    @regla("urgencia")
+when
+    Solicitud( urgencia == Urgencia.SIN_APURO )
+    $r : Resultado()
+then
+    emitir(drools, $r, "sin-apuro", puntajes.urgencia().sinApuro());
+end
+
+// ---- Documentacion de ingresos ----
+
+rule "documentacion-si"
+    @regla("documentacion")
+when
+    Solicitud( documentacion == Documentacion.SI )
+    $r : Resultado()
+then
+    emitir(drools, $r, "si", puntajes.documentacion().si());
+end
+
+rule "documentacion-no"
+    @regla("documentacion")
+when
+    Solicitud( documentacion == Documentacion.NO )
+    $r : Resultado()
+then
+    emitir(drools, $r, "no", puntajes.documentacion().no());
+end
+
+// ---- Destino del prestamo (campo "motivo" del contrato) ----
+
+rule "destino-definido"
+    @regla("destino")
+when
+    Solicitud( destino != Destino.OTRO )
+    $r : Resultado()
+then
+    emitir(drools, $r, "definido", puntajes.destino().definido());
+end
+
+rule "destino-no-definido"
+    @regla("destino")
+when
+    Solicitud( destino == Destino.OTRO )
+    $r : Resultado()
+then
+    emitir(drools, $r, "no-definido", puntajes.destino().noDefinido());
+end
+
+// ---- Situacion laboral ----
+
+rule "situacion-dependiente"
+    @regla("situacion-laboral")
+when
+    Solicitud( situacionLaboral == SituacionLaboral.DEPENDIENTE )
+    $r : Resultado()
+then
+    emitir(drools, $r, "dependiente", puntajes.situacionLaboral().dependiente());
+end
+
+rule "situacion-independiente"
+    @regla("situacion-laboral")
+when
+    Solicitud( situacionLaboral == SituacionLaboral.INDEPENDIENTE )
+    $r : Resultado()
+then
+    emitir(drools, $r, "independiente", puntajes.situacionLaboral().independiente());
+end
+
+rule "situacion-jubilado"
+    @regla("situacion-laboral")
+when
+    Solicitud( situacionLaboral == SituacionLaboral.JUBILADO )
+    $r : Resultado()
+then
+    emitir(drools, $r, "jubilado", puntajes.situacionLaboral().jubilado());
+end
+
+rule "situacion-estudiante"
+    @regla("situacion-laboral")
+when
+    Solicitud( situacionLaboral == SituacionLaboral.ESTUDIANTE )
+    $r : Resultado()
+then
+    emitir(drools, $r, "estudiante", puntajes.situacionLaboral().estudiante());
+end
+
+rule "situacion-desempleado"
+    @regla("situacion-laboral")
+when
+    Solicitud( situacionLaboral == SituacionLaboral.DESEMPLEADO )
+    $r : Resultado()
+then
+    emitir(drools, $r, "desempleado", puntajes.situacionLaboral().desempleado());
+end
+
+// ---- Antiguedad laboral (solo dependiente o independiente) ----
+
+rule "antiguedad-alta"
+    @regla("antiguedad")
+when
+    Solicitud( situacionLaboral in (SituacionLaboral.DEPENDIENTE, SituacionLaboral.INDEPENDIENTE),
+               antiguedadAlMenos(umbrales.antiguedad().mesesAlto()) )
+    $r : Resultado()
+then
+    emitir(drools, $r, "alta", puntajes.antiguedad().doceOMas());
+end
+
+rule "antiguedad-media"
+    @regla("antiguedad")
+when
+    Solicitud( situacionLaboral in (SituacionLaboral.DEPENDIENTE, SituacionLaboral.INDEPENDIENTE),
+               !antiguedadAlMenos(umbrales.antiguedad().mesesAlto()),
+               antiguedadAlMenos(umbrales.antiguedad().mesesMedio()) )
+    $r : Resultado()
+then
+    emitir(drools, $r, "media", puntajes.antiguedad().seisAOnce());
+end
+
+rule "antiguedad-baja"
+    @regla("antiguedad")
+when
+    Solicitud( situacionLaboral in (SituacionLaboral.DEPENDIENTE, SituacionLaboral.INDEPENDIENTE),
+               !antiguedadAlMenos(umbrales.antiguedad().mesesMedio()) )
+    $r : Resultado()
+then
+    emitir(drools, $r, "baja", puntajes.antiguedad().menosDeSeis());
+end
+
+rule "antiguedad-no-aplica"
+    @regla("antiguedad")
+when
+    $s : Solicitud( situacionLaboral not in (SituacionLaboral.DEPENDIENTE, SituacionLaboral.INDEPENDIENTE) )
+    $r : Resultado()
+then
+    emitir(drools, $r, "no-aplica-" + $s.situacionLaboral().codigo(), puntajes.antiguedad().noAplica());
+end
+
+// ---- Clearing de Informes ----
+
+rule "clearing-si"
+    @regla("clearing")
+when
+    Solicitud( clearing == Clearing.SI )
+    $r : Resultado()
+then
+    emitir(drools, $r, "si", puntajes.clearing().si());
+end
+
+rule "clearing-no-se"
+    @regla("clearing")
+when
+    Solicitud( clearing == Clearing.NO_SE )
+    $r : Resultado()
+then
+    emitir(drools, $r, "no-se", puntajes.clearing().noSe());
+end
+
+rule "clearing-no"
+    @regla("clearing")
+when
+    Solicitud( clearing == Clearing.NO )
+    $r : Resultado()
+then
+    emitir(drools, $r, "no", puntajes.clearing().no());
+end
+
+// ---- Carga de deuda: (cuota_deudas + monto / plazo_meses) / ingreso_mensual ----
+
+rule "carga-baja"
+    @regla("carga")
+when
+    Solicitud( cargaNoSupera(umbrales.carga().baja()) )
+    $r : Resultado()
+then
+    emitir(drools, $r, "baja", puntajes.carga().baja());
+end
+
+rule "carga-media"
+    @regla("carga")
+when
+    Solicitud( !cargaNoSupera(umbrales.carga().baja()), cargaNoSupera(umbrales.carga().alta()) )
+    $r : Resultado()
+then
+    emitir(drools, $r, "media", puntajes.carga().media());
+end
+
+rule "carga-alta"
+    @regla("carga")
+when
+    Solicitud( !cargaNoSupera(umbrales.carga().alta()) )
+    $r : Resultado()
+then
+    emitir(drools, $r, "alta", puntajes.carga().alta());
+end

@@ -1,0 +1,51 @@
+spring:
+  application:
+    name: backend-leads
+
+leads:
+  seguridad:
+    api-key: ${LEADS_API_KEY:}
+  reglas:
+    archivo: classpath:reglas/evaluacion.drl
+    prioridad:
+      alta: 60
+      media: 30
+    umbrales:
+      antiguedad:
+        meses-alto: 12
+        meses-medio: 6
+      carga:
+        baja: 0.3
+        alta: 0.5
+    # "no" va entre comillas: en YAML, una clave no sin comillas se lee como el booleano false.
+    puntajes:
+      urgencia:
+        esta-semana: 20
+        este-mes: 15
+        de-1-a-3-meses: 5
+        sin-apuro: 0
+      documentacion:
+        si: 15
+        "no": 0
+      destino:
+        definido: 5
+        no-definido: 0
+      situacion-laboral:
+        dependiente: 15
+        independiente: 10
+        jubilado: 15
+        estudiante: 0
+        desempleado: -10
+      antiguedad:
+        doce-o-mas: 10
+        seis-a-once: 5
+        menos-de-seis: 0
+        no-aplica: 0
+      clearing:
+        si: -30
+        no-se: -5
+        "no": 0
+      carga:
+        baja: 20
+        media: 5
+        alta: -15

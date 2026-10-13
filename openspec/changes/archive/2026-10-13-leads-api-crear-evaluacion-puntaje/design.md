@@ -78,16 +78,21 @@ por solicitud. Excluyentes y de puntaje se separan por el tipo de motivo:
 | `documentacion` | PUNTAJE | `documentacion-si`, `documentacion-no` |
 | `destino` | PUNTAJE | `destino-definido`, `destino-no-definido` |
 | `situacion-laboral` | PUNTAJE | `situacion-dependiente`, `situacion-independiente`, `situacion-jubilado`, `situacion-estudiante`, `situacion-desempleado` |
-| `antiguedad` | PUNTAJE | `antiguedad-12-o-mas`, `antiguedad-6-a-11`, `antiguedad-menos-de-6`, `antiguedad-no-aplica` |
+| `antiguedad` | PUNTAJE | `antiguedad-alta`, `antiguedad-media`, `antiguedad-baja`, `antiguedad-no-aplica` |
 | `clearing` | PUNTAJE | `clearing-si`, `clearing-no-se`, `clearing-no` |
-| `carga` | PUNTAJE | `carga-hasta-30`, `carga-hasta-50`, `carga-mas-de-50` |
+| `carga` | PUNTAJE | `carga-baja`, `carga-media`, `carga-alta` |
 
 En este change no hay reglas de tipo ELEGIBILIDAD; la de edad llega con
 `leads-api-agregar-elegibilidad-edad` y va antes de las de puntaje.
 
 Cada regla agrega al `Resultado` un motivo con `(regla, codigo, puntos)`. Los
 puntos salen del global `puntajes`; los límites de los tramos (6 y 12 meses,
-0,3 y 0,5), del global `umbrales`. El DRL no contiene números de negocio.
+0,3 y 0,5), del global `umbrales`. El DRL no contiene números de negocio, ni
+siquiera en los nombres de regla o en los códigos: los tramos se nombran
+`baja`/`media`/`alta` porque sus límites son configurables. (Cambio hecho
+durante el apply, con acuerdo de Julian: la versión aprobada nombraba los
+tramos con sus valores, como `carga-hasta-30`, y quedaba desalineada si se
+cambiaba un umbral.)
 
 - *Alternativa descartada (explore):* una regla DRL por regla de negocio con
   el tramo calculado en Java; dejaba a Drools como un pasamanos.
@@ -98,6 +103,14 @@ El DRL es solo ASCII y nunca contiene textos en español. Una clase de textos
 traduce `(regla, codigo, puntos)` a la frase de la spec y formatea el puntaje
 (`+N`, `-N`, `0`) con guion ASCII. Los textos del recorte también se arman
 ahí. Un test verifica que el DRL no tiene bytes fuera de ASCII.
+
+Los textos de antigüedad y carga se arman con los umbrales configurados, no
+con números fijos, para que un motivo nunca describa un corte distinto del
+real: "hasta el {baja × 100}% del ingreso", "de más del {baja × 100}% y hasta
+el {alta × 100}% del ingreso", "de más del {alta × 100}% del ingreso"; "de
+{alto} meses o más", "de {medio} a {alto − 1} meses", "de menos de {medio}
+meses". Con la configuración por defecto (0,3; 0,5; 6; 12) dan exactamente
+los textos de la spec.
 
 - *Motivo:* el spike mostró que Drools corrompe caracteres no ASCII si la JVM
   arranca con otra codificación por defecto (notas técnicas, "Spike de
@@ -262,18 +275,39 @@ Un `@RestControllerAdvice` que extiende `ResponseEntityExceptionHandler`:
 
 ### D12. Paquetes
 
+Primero por funcionalidad (`evaluacion`, `seguridad`, `comun`) y después por
+tipo de clase. Los nombres de los paquetes de tipo van en inglés; `enums` y no
+`enum`, que es palabra reservada. (Cambio pedido por Julian durante el apply,
+después del grupo 6; la versión aprobada dividía por sub-funcionalidad:
+`api`, `dominio`, `reglas`.)
+
 ```
 com.sagant.leads.leads_api
-  evaluacion/api/       controller, SolicitudCruda y su deserializador, respuesta
-  evaluacion/dominio/   Solicitud, enums de códigos, Resultado, Motivo, cálculo
-                        de score y prioridad, validador
-  evaluacion/reglas/    KieBase, ejecución de la sesión, textos de motivos,
-                        version_reglas
-  evaluacion/config/    records de leads.reglas y su validación de coherencia
-  seguridad/            filtro de clave, record de leads.seguridad
-  comun/error/          advice, catálogo de type, excepciones
+  evaluacion/
+    controller/   EvaluacionController
+    dto/          SolicitudCruda y su deserializador, ValorCrudo,
+                  RespuestaEvaluacion, ErrorCampo, ResultadoValidacion
+    enums/        códigos del contrato (Destino, Urgencia, ...), Prioridad,
+                  CodigoContrato
+    model/        Solicitud, Motivo, Resultado, Evaluacion
+    validation/   ValidadorSolicitud, SessionIdDelRequest
+    service/      Evaluador, MotorReglas, CalculoEvaluacion, textos de
+                  motivos, VersionReglas
+    config/       ReglasProperties y su validación, KieBase, CompiladorReglas,
+                  ArchivoReglas
+  seguridad/
+    config/       SeguridadProperties
+    filter/       FiltroClaveApi
+    service/      ClaveApi
+  comun/
+    config/       ConfiguracionWeb (Accept ignorado)
+    enums/        TipoError (catálogo de type)
+    exception/    NoAutorizadoException, ValidacionException
+    handler/      ManejadorErrores
 src/main/resources/reglas/evaluacion.drl
 ```
+
+Los tests siguen la misma estructura.
 
 ### D13. Build
 

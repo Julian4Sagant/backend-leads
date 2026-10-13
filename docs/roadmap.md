@@ -7,8 +7,8 @@ actualizó con el explore del change 1 (2026-10-13), que eligió Drools como
 motor de reglas. Las verificaciones técnicas están en
 [notas-tecnicas-leads.md](notas-tecnicas-leads.md).
 
-Estado: change 1 en curso (`change/leads-api-crear-evaluacion-puntaje`).
-`openspec/specs/` está vacío.
+Estado: change 1 archivado (`openspec/changes/archive/2026-10-13-leads-api-crear-evaluacion-puntaje`).
+`openspec/specs/` tiene `acceso-api` y `evaluacion-leads`.
 
 ## Capabilities
 
@@ -37,26 +37,29 @@ un solo lugar. `evaluacion-leads` la referencia.
   Orden recomendado: 1, 2, 3, 4.  2, 3 y 4 dependen solo de 1.
 ```
 
-### 1. `leads-api-crear-evaluacion-puntaje`
+### 1. `leads-api-crear-evaluacion-puntaje` (archivado)
 Rebanada base: POST /evaluar de punta a punta.
 - Clave de API con un filtro propio, sin Spring Security (401; la app no
   arranca sin `LEADS_API_KEY` o con una clave de menos de 32 caracteres, con
   caracteres no ASCII imprimibles o con espacios), sin actuator ni springdoc,
   404/405 con clave válida.
 - ProblemDetail desde un único `@RestControllerAdvice`, con la tabla de `type`
-  y `charset=UTF-8` explícito.
+  y `charset=UTF-8` explícito. Solo acepta `Content-Type: application/json`
+  (si no, 415) e ignora el header Accept: responde siempre JSON y nunca 406.
 - Drools 10.2.0 como motor de reglas (ver "Motor de reglas").
 - Se saca lombok del `pom.xml`.
 - Contrato nuevo. **Cambio incompatible para n8n**, a declarar en "Contratos
   afectados": sale `nombre` del request; entran `edad` y `antiguedad_meses`
   (requeridos); entra `version_reglas` en la response.
-- Validación: requeridos, valores permitidos de cada código, rangos, todos los
-  errores juntos, campos extra ignorados.
+- Validación: requeridos, valores permitidos de cada código, rangos con su
+  borde exacto (decisión 15, que pasó del change 3 a este), todos los errores
+  juntos, campos extra ignorados.
 - Las 7 reglas de puntaje en el DRL (motivo `PUNTAJE`), prioridad, recorte
   0/100 con su motivo, orden de motivos, carga con BigDecimal sin dividir.
+  En este change la respuesta tiene 7 motivos, u 8 con recorte.
 - Puntajes y umbrales en `application.yml` con validación de coherencia;
   `version_reglas` y sus tests; tabla de máximos y su test; UTF-8.
-- Decisiones: 1, 2, 4 a 12, 14, 16, 17, 21 a 24.
+- Decisiones: 1, 2, 4 a 12, 14 a 17, 21 a 24.
 - El DTO usa desde el inicio la representación "cruda" de los números (notas,
   punto c), para que el change 3 no tenga que rehacerlo.
 
@@ -67,14 +70,23 @@ Rebanada base: POST /evaluar de punta a punta.
   escenarios. Bordes 17 y 18.
 - Decisión: 3. Depende de 1. `edad` ya se valida desde el change 1 (14 a 100),
   pero hasta acá no afecta el resultado.
+- Modifica con un `MODIFIED` el requirement «Orden y forma de los motivos» de
+  `evaluacion-leads`: el motivo excluyente va al principio, así que la
+  respuesta pasa a tener 8 motivos (9 con recorte o inelegibilidad). Actualiza
+  los tests del orden y del conteo.
 
 ### 3. `leads-api-endurecer-formato-numerico`
 - Una misma regex por campo para número JSON y para string numérico.
-- Todos los escenarios 400 de la decisión 13, incluidos "" y espacios.
-- Bordes de la decisión 15.
-- Mensajes distintos para formato inválido y tipo incorrecto.
-- Longitud máxima de números en el parser.
-- Decisiones: 13, 15, 19. Depende de 1.
+- Todos los escenarios 400 de la decisión 13, incluidos "" y espacios. Hoy
+  `1e3` y `+5` se aceptan, y `.5` también en importes (validación con el
+  formato de BigDecimal).
+- Mensajes distintos para formato inválido y tipo incorrecto (los códigos ya
+  se distinguen desde el change 1).
+- Longitud máxima de números en el parser
+  (`spring.jackson.factory.constraints.read.max-number-length`; hoy rige el
+  default de Jackson, 1000 dígitos).
+- Decisiones: 13 y 19. Depende de 1. Los bordes de rango (decisión 15) ya
+  están en el change 1.
 
 ### 4. `leads-api-limitar-tamano-cuerpo`
 - Filtro propio de 16 KB que cubre Transfer-Encoding chunked; 413 con su `type`.
@@ -104,12 +116,17 @@ Drools 10.2.0, verificado con un spike (notas técnicas, "Spike de Drools").
                   inelegibilidad, score, prioridad
 ```
 
-- Cada regla de negocio es una regla del DRL con un identificador estable.
-  Excluyentes y de puntaje se distinguen por el tipo de motivo que emiten
-  (`ELEGIBILIDAD` o `PUNTAJE`), no por interfaces de Java.
-- El DRL emite códigos y es solo ASCII. Los textos en español se arman en Java.
+- Cada regla de negocio es un grupo de reglas DRL mutuamente excluyentes, una
+  por tramo, que comparten un identificador estable (`@regla`). Exactamente
+  una de cada grupo dispara. Excluyentes y de puntaje se distinguen por el
+  tipo de motivo que emiten (`ELEGIBILIDAD` o `PUNTAJE`), no por interfaces de
+  Java.
+- El DRL emite códigos y es solo ASCII. Los textos en español se arman en Java,
+  con los umbrales configurados ("hasta el 30%", "12 meses o más"), así un
+  motivo nunca describe un corte distinto del real.
 - Los puntajes y umbrales siguen en `application.yml` y llegan al DRL como
-  global. El DRL no lleva números de puntaje.
+  global. El DRL no lleva números de negocio, ni siquiera en los nombres: los
+  tramos se llaman `baja`/`media`/`alta`.
 - El DRL se compila al arrancar. Si tiene errores, la app no arranca.
 - `version_reglas` = SHA-256 de (configuración canónica + DRL con finales de
   línea LF + constante de revisión), truncado a 12 caracteres hexadecimales.
@@ -133,8 +150,11 @@ guion. Uno por caso, estable y registrado en la spec. Un change que necesita un
 | 401 | `urn:leads-api:error:no-autorizado` | Sin X-API-Key o con una clave incorrecta |
 | 404 | `urn:leads-api:error:no-encontrado` | Ruta desconocida (con clave válida) |
 | 405 | `urn:leads-api:error:metodo-no-permitido` | Método no soportado (con clave válida) |
-| 413 | `urn:leads-api:error:cuerpo-demasiado-grande` | Cuerpo de más de 16 KB |
+| 413 | `urn:leads-api:error:cuerpo-demasiado-grande` | Cuerpo de más de 16 KB (comportamiento en el change 4) |
+| 415 | `urn:leads-api:error:tipo-de-contenido-no-soportado` | Content-Type ausente o distinto de `application/json` |
 | 500 | `urn:leads-api:error:interno` | Error no previsto, sin detalles internos en la respuesta |
+
+El header Accept se ignora: el servicio responde siempre JSON y nunca 406.
 
 `{}` es JSON válido: va a `validacion`, con un error `requerido` por campo.
 
@@ -145,21 +165,18 @@ nombres de campo (`session_id`, `plazo_meses`) siguen con guion bajo porque son
 el contrato con n8n y el Sheet.
 
 ### Paquetes
-Primero por funcionalidad y después por capa, bajo `com.sagant.leads.leads_api`:
+Primero por funcionalidad y después por tipo de clase, bajo
+`com.sagant.leads.leads_api` (detalle en el design del change 1, D12):
 
 ```
-evaluacion/
-  api/        controller, DTO de request y response
-  dominio/    solicitud validada, resultado, motivos, cálculo del score
-  reglas/     carga del DRL, sesión de Drools, textos de los motivos
-  config/     propiedades de reglas, validación de coherencia, version_reglas
-seguridad/    filtro de clave, propiedades
-comun/
-  error/      advice, tipos de error
-  web/        filtro de tamaño del cuerpo
+evaluacion/  controller · dto · enums · model · validation · service · config
+seguridad/   config · filter · service
+comun/       config · enums · exception · handler
 ```
 
-El DRL vive en `src/main/resources/reglas/`.
+Los tests siguen la misma estructura. El DRL vive en
+`src/main/resources/reglas/`. El filtro de tamaño del cuerpo (change 4) va en
+`comun/filter/`.
 
 ### Logging
 - Una línea por evaluación exitosa con `session_id`, prioridad, score y
@@ -182,7 +199,9 @@ El DRL vive en `src/main/resources/reglas/`.
   muestra la clave. Sugerencia para generarla: `openssl rand -base64 32`. Los
   tests usan una clave ficticia.
 - `spring.jackson.factory.constraints.read.max-number-length` (ver notas,
-  punto a).
+  punto a): se configura en el change 3.
+- En `application.yml`, la clave `no` va entre comillas (`"no": 0`): YAML la
+  lee como el booleano `false` si no.
 
 ### Comportamiento de negocio confirmado
 Con los puntajes actuales (tabla en las notas técnicas, punto f):
@@ -203,9 +222,11 @@ Ninguna: todas se cerraron en el explore del 2026-10-13.
 
 ### Change 3
 - Claves duplicadas en el JSON: ¿400 o gana la última? Se puede activar
-  `spring.jackson.read.strict-duplicate-detection`.
+  `spring.jackson.read.strict-duplicate-detection`. Hoy gana la última.
 - Un string numérico negativo ("-5"): ¿se informa como `formato-invalido` o
-  como `fuera-de-rango`?
+  como `fuera-de-rango`? Hoy da `fuera-de-rango`.
+- ¿Un entero escrito con decimales en cero (`12.0`) es válido? Hoy da
+  `formato-invalido`: la regla mira cómo está escrito, no su valor.
 
 ### Change 4
 - ¿Un Content-Length mayor a 16 KB se rechaza antes de leer? Recomendación:
@@ -213,5 +234,6 @@ Ninguna: todas se cerraron en el explore del 2026-10-13.
 - Borde exacto: 16384 bytes pasa y 16385 da 413. Falta confirmarlo.
 
 ## Próximo paso
-Correr `/opsx:propose leads-api-crear-evaluacion-puntaje` en el branch
-`change/leads-api-crear-evaluacion-puntaje`.
+Mergear el PR del change 1 y actualizar n8n con el contrato nuevo. Después,
+el explore del change siguiente. Si el servicio se va a exponer por ngrok,
+conviene que ese sea el change 4 (límite de tamaño del cuerpo).
