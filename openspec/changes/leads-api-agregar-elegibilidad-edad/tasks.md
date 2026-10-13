@@ -40,7 +40,7 @@ verde al final del bloque.
 
 ## 5. Documentación
 
-- [ ] 5.1 Actualizar `docs/roadmap.md` (change 2 implementado) y `docs/notas-tecnicas-leads.md` (tabla de máximos sin cambios para mayores; texto de los motivos de edad); verificar que no contradicen la spec
+- [x] 5.1 Actualizar `docs/roadmap.md` (change 2 implementado) y `docs/notas-tecnicas-leads.md` (tabla de máximos sin cambios para mayores; texto de los motivos de edad); verificar que no contradicen la spec
 
 ## 6. Cierre
 

@@ -63,7 +63,7 @@ Rebanada base: POST /evaluar de punta a punta.
 - El DTO usa desde el inicio la representación "cruda" de los números (notas,
   punto c), para que el change 3 no tenga que rehacerlo.
 
-### 2. `leads-api-agregar-elegibilidad-edad` (en curso)
+### 2. `leads-api-agregar-elegibilidad-edad` (implementado, en revisión)
 Decisiones del explore del 2026-10-13:
 - Regla de edad en el DRL (motivo `ELEGIBILIDAD`). Menor que la edad mínima:
   no elegible, prioridad BAJA, score 0. Las reglas de puntaje se evalúan igual
@@ -87,6 +87,13 @@ Decisiones del explore del 2026-10-13:
   `evaluacion-leads`: el motivo excluyente va al principio, así que la
   respuesta pasa a tener 8 motivos (9 con recorte o inelegibilidad). Actualiza
   los tests del orden y del conteo.
+- Implementado el 2026-10-13 (PR #4). Durante la implementación también se
+  modificó «Campos requeridos»: el escenario «Varios errores en una misma
+  solicitud» usaba `edad` 13 como dato inválido y pasó a usar `edad` 0.
+  Confirmado: un menor de 18 figura como no elegible, nunca como error.
+- `version_reglas` cambia para todos los leads (`REVISION_LOGICA` 2).
+- Después del merge hay que reiniciar el servicio para que tome las reglas
+  nuevas. n8n no necesita cambios.
 
 ### 3. `leads-api-endurecer-formato-numerico`
 - Una misma regex por campo para número JSON y para string numérico.
@@ -223,6 +230,9 @@ Con los puntajes actuales (tabla en las notas técnicas, punto f):
   borde);
 - un desempleado nunca llega a ALTA (máximo 50).
 
+Desde el change 2, estos máximos valen para solicitudes elegibles (18 años o
+más). Un menor de la edad mínima siempre queda con score 0 y prioridad BAJA.
+
 ## Preguntas abiertas por change
 
 ### Change 1
@@ -258,6 +268,6 @@ Surgieron después del change 1 y todavía no tienen change ni decisión:
   de hacerle responder las 12 preguntas para terminar no elegible.
 
 ## Próximo paso
-Propuesta del change 2 (`/opsx:propose leads-api-agregar-elegibilidad-edad`).
-Si el servicio se va a dejar expuesto por ngrok más seguido, conviene que el
+Revisión del código del change 2 en el PR #4, archive y merge. Después,
+explore del change siguiente. Si el servicio se va a dejar expuesto por ngrok más seguido, conviene que el
 siguiente sea el change 4 (límite de tamaño del cuerpo).
