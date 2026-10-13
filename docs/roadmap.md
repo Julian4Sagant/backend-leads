@@ -63,13 +63,26 @@ Rebanada base: POST /evaluar de punta a punta.
 - El DTO usa desde el inicio la representación "cruda" de los números (notas,
   punto c), para que el change 3 no tenga que rehacerlo.
 
-### 2. `leads-api-agregar-elegibilidad-edad`
-- Regla de edad en el DRL (motivo `ELEGIBILIDAD`; < 18: BAJA, score 0).
-- Motivo cuando pasa ("Mayor de edad: elegible").
-- Precedencia del ajuste por inelegibilidad sobre el recorte, con sus tres
-  escenarios. Bordes 17 y 18.
-- Decisión: 3. Depende de 1. `edad` ya se valida desde el change 1 (14 a 100),
-  pero hasta acá no afecta el resultado.
+### 2. `leads-api-agregar-elegibilidad-edad` (en curso)
+Decisiones del explore del 2026-10-13:
+- Regla de edad en el DRL (motivo `ELEGIBILIDAD`). Menor que la edad mínima:
+  no elegible, prioridad BAJA, score 0. Las reglas de puntaje se evalúan igual
+  y aparecen en los motivos.
+- Edad mínima configurable en `application.yml` (hoy 18), como el resto de los
+  umbrales. Los textos usan el valor configurado: "No elegible: menor de 18
+  años" y "Edad de 18 años o más: elegible" (este último reemplaza al
+  "Mayor de edad: elegible" del plan original, que quedaría engañoso con otra
+  edad mínima).
+- Precedencia del ajuste por inelegibilidad sobre el recorte. El motivo final
+  "Score ajustado a 0 por inelegibilidad (suma X)" aparece **siempre** que la
+  solicitud es inelegible, también con suma 0 o entre 0 y 100.
+- **Cambio de rango de `edad`: de 14 a 100 pasa a 1 a 100**, para que un menor
+  de 14 figure como no elegible y no como error. Todos los menores llevan el
+  mismo mensaje. 0 o menos y más de 100 siguen siendo `fuera-de-rango`. Es
+  compatible con n8n: se aceptan más valores, nunca menos. Modifica el
+  requirement «Rangos de los números» de `evaluacion-leads` y la decisión 14.
+- Bordes: edad 0, 1, 17, 18, 100 y 101.
+- Decisión: 3. Depende de 1.
 - Modifica con un `MODIFIED` el requirement «Orden y forma de los motivos» de
   `evaluacion-leads`: el motivo excluyente va al principio, así que la
   respuesta pasa a tener 8 motivos (9 con recorte o inelegibilidad). Actualiza
@@ -216,9 +229,7 @@ Con los puntajes actuales (tabla en las notas técnicas, punto f):
 Ninguna: todas se cerraron en el explore del 2026-10-13.
 
 ### Change 2
-- ¿El motivo "Score ajustado a 0 por inelegibilidad (suma X)" aparece también
-  cuando la suma ya es 0 o está entre 0 y 100? La decisión 3 implica que sí,
-  siempre que sea inelegible; falta confirmarlo.
+Ninguna: todas se cerraron en el explore del 2026-10-13 (ver el change 2).
 
 ### Change 3
 - Claves duplicadas en el JSON: ¿400 o gana la última? Se puede activar
@@ -233,7 +244,20 @@ Ninguna: todas se cerraron en el explore del 2026-10-13.
   sí, y además contar lo leído.
 - Borde exacto: 16384 bytes pasa y 16385 da 413. Falta confirmarlo.
 
+## Pendientes fuera del plan
+
+Surgieron después del change 1 y todavía no tienen change ni decisión:
+- **Que el servicio no dependa de una PC.** Hoy corre en una computadora local
+  expuesta con ngrok: si se apaga o se corta ngrok, los leads quedan en
+  `ERROR` sin calificar. Para usarlo con clientes reales hace falta un
+  servidor siempre disponible.
+- **Qué hacer con los leads en `ERROR`.** Hoy quedan marcados en la planilla
+  y nadie los vuelve a calificar: falta decidir si se revisan a mano o se
+  reintentan.
+- **Avisar en el chat a un menor de edad desde el principio** (en n8n), en vez
+  de hacerle responder las 12 preguntas para terminar no elegible.
+
 ## Próximo paso
-Mergear el PR del change 1 y actualizar n8n con el contrato nuevo. Después,
-el explore del change siguiente. Si el servicio se va a exponer por ngrok,
-conviene que ese sea el change 4 (límite de tamaño del cuerpo).
+Propuesta del change 2 (`/opsx:propose leads-api-agregar-elegibilidad-edad`).
+Si el servicio se va a dejar expuesto por ngrok más seguido, conviene que el
+siguiente sea el change 4 (límite de tamaño del cuerpo).
