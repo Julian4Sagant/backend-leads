@@ -84,6 +84,14 @@ Confirmadas por Julian en la revisión de la propuesta (2026-10-13):
   (no dicen ": 0"), igual que el motivo de recorte del change 1. No suman al
   score.
 
+Confirmadas por Julian durante la implementación (2026-10-13):
+- Un menor de 18 no puede sacar un préstamo, y se lo muestra como **no
+  elegible**, no como error: queda registrado que consultó y por qué se lo
+  descartó.
+- El escenario «Varios errores en una misma solicitud» usaba `edad` 13 como
+  dato inválido, y con este change 13 es válido. Pasa a usar `edad` 0, el
+  nuevo borde inválido; el resultado esperado no cambia.
+
 ## Supuestos pendientes
 
 Ninguno.

@@ -19,6 +19,27 @@ la solicitud base y responder 200 con `prioridad`, `score`, `motivos` y
 - **WHEN** se envía POST /evaluar con el cuerpo `[1, 2]`
 - **THEN** responde 400 `validacion` con `tipo-invalido` en el campo `$`
 
+### Requirement: Campos requeridos
+Los 12 campos de la solicitud son requeridos. Un campo ausente o con valor
+null MUST producir un error `requerido`. El sistema SHALL devolver todos los
+errores de la solicitud juntos en un único 400.
+
+#### Scenario: Campo ausente
+- **WHEN** se envía POST /evaluar con la solicitud base sin `edad`
+- **THEN** responde 400 `validacion` con `requerido` en `edad`
+
+#### Scenario: Campo null
+- **WHEN** se envía POST /evaluar con la solicitud base y `antiguedad_meses` null
+- **THEN** responde 400 `validacion` con `requerido` en `antiguedad_meses`
+
+#### Scenario: Objeto vacío
+- **WHEN** se envía POST /evaluar con el cuerpo `{}`
+- **THEN** responde 400 `validacion` con 12 errores `requerido`, uno por campo
+
+#### Scenario: Varios errores en una misma solicitud
+- **WHEN** se envía POST /evaluar con la solicitud base, `edad` 0 y `clearing` "talvez"
+- **THEN** responde 400 `validacion` con exactamente 2 errores: `fuera-de-rango` en `edad` y `valor-no-permitido` en `clearing`
+
 ### Requirement: Rangos de los números
 Los números SHALL cumplir estos rangos, con los extremos incluidos: `monto`
 mayor que 0; `ingreso_mensual` y `cuota_deudas` mayores o iguales a 0;

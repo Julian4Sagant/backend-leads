@@ -16,7 +16,7 @@ class EvaluacionHttpTest extends PruebaHttp {
 	void solicitudBaseEvaluada() throws Exception {
 		Respuesta r = evaluar(base());
 		assertEvaluacion(r, 85, "ALTA");
-		assertThat(r.motivos()).hasSize(7);
+		assertThat(r.motivos()).hasSize(8);
 		assertThat(r.json().path("version_reglas").asString()).isNotBlank();
 	}
 

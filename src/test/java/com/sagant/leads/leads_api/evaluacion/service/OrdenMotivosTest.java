@@ -19,8 +19,8 @@ import com.sagant.leads.leads_api.evaluacion.model.Motivo;
 import com.sagant.leads.leads_api.evaluacion.model.SolicitudDePrueba;
 
 /**
- * Orden completo de los motivos: 7 sin recorte y 8 con recorte, con el motivo final una sola vez
- * y al final.
+ * Orden completo de los motivos: 8 sin motivo final y 9 con recorte o con ajuste, con el de edad
+ * siempre primero y el motivo final una sola vez y al final.
  */
 class OrdenMotivosTest {
 
@@ -31,6 +31,7 @@ class OrdenMotivosTest {
 	void ordenCompletoSinRecorte() {
 		Evaluacion evaluacion = calculo.calcular(ReglasDePrueba.motor().evaluar(SolicitudDePrueba.base().build()));
 		assertThat(evaluacion.motivos()).containsExactly(
+				"Edad de 18 años o más: elegible",
 				"Urgencia esta semana: +20",
 				"Documentación de ingresos disponible: +15",
 				"Destino del préstamo definido: +5",
@@ -48,6 +49,7 @@ class OrdenMotivosTest {
 				.clearing(Clearing.SI).cuotaDeudas("60000").build();
 		Evaluacion evaluacion = calculo.calcular(ReglasDePrueba.motor().evaluar(solicitud));
 		assertThat(evaluacion.motivos()).containsExactly(
+				"Edad de 18 años o más: elegible",
 				"Sin urgencia: 0",
 				"Sin documentación de ingresos: 0",
 				"Destino del préstamo no definido: 0",
@@ -62,13 +64,40 @@ class OrdenMotivosTest {
 	@Test
 	void ordenCompletoConRecorteAlMaximo() {
 		Evaluacion evaluacion = calculo.calcular(CalculoEvaluacionTest.motivosQueSuman(105));
-		assertThat(evaluacion.motivos()).hasSize(8);
+		assertThat(evaluacion.motivos()).hasSize(9).first().isEqualTo("Edad de 18 años o más: elegible");
 		assertUnRecorteAlFinal(evaluacion, "Score limitado al máximo de 100 (suma 105)");
 	}
 
 	@Test
+	void ordenCompletoConAjustePorInelegibilidad() {
+		Evaluacion evaluacion = calculo.calcular(ReglasDePrueba.motor().evaluar(SolicitudDePrueba.base().edad(16).build()));
+		assertThat(evaluacion.motivos()).containsExactly(
+				"No elegible: menor de 18 años",
+				"Urgencia esta semana: +20",
+				"Documentación de ingresos disponible: +15",
+				"Destino del préstamo definido: +5",
+				"Empleado en relación de dependencia: +15",
+				"Antigüedad laboral de 12 meses o más: +10",
+				"No figura en el Clearing de Informes: 0",
+				"Carga de deuda hasta el 30% del ingreso: +20",
+				"Score ajustado a 0 por inelegibilidad (suma 85)");
+		assertThat(evaluacion.motivos()).filteredOn(m -> m.startsWith("Score ")).hasSize(1);
+	}
+
+	@Test
+	void ordenCompletoConAjusteYSumaNegativa() {
+		var solicitud = SolicitudDePrueba.base().edad(16).situacionLaboral(SituacionLaboral.DESEMPLEADO)
+				.antiguedadMeses(0).urgencia(Urgencia.SIN_APURO).documentacion(Documentacion.NO)
+				.destino(Destino.OTRO).clearing(Clearing.SI).cuotaDeudas("60000").build();
+		Evaluacion evaluacion = calculo.calcular(ReglasDePrueba.motor().evaluar(solicitud));
+		assertThat(evaluacion.motivos()).hasSize(9).first().isEqualTo("No elegible: menor de 18 años");
+		assertThat(evaluacion.motivos().getLast()).isEqualTo("Score ajustado a 0 por inelegibilidad (suma -55)");
+		assertThat(evaluacion.motivos()).filteredOn(m -> m.startsWith("Score ")).hasSize(1);
+	}
+
+	@Test
 	void elOrdenNoDependeDelOrdenDeDisparo() {
-		List<Motivo> emitidos = new ArrayList<>(ReglasDePrueba.motor().evaluar(SolicitudDePrueba.base().build()));
+		List<Motivo> emitidos = new ArrayList<>(ReglasDePrueba.motor().evaluar(SolicitudDePrueba.base().edad(16).build()));
 		List<String> esperado = calculo.calcular(emitidos).motivos();
 		Collections.reverse(emitidos);
 		assertThat(calculo.calcular(emitidos).motivos()).isEqualTo(esperado);

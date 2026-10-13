@@ -46,7 +46,7 @@ public class ValidadorSolicitud {
 		}
 		Lectura l = new Lectura(cruda);
 		String sessionId = l.sessionId();
-		Integer edad = l.entero("edad", 14, 100);
+		Integer edad = l.entero("edad", 1, 100);
 		Destino destino = l.codigo("motivo", Destino.class);
 		BigDecimal monto = l.importe("monto", Minimo.MAYOR_QUE_CERO);
 		Integer plazoMeses = l.entero("plazo_meses", 1, 120);

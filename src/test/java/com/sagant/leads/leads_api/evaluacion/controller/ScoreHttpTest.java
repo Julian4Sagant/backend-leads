@@ -21,6 +21,7 @@ class ScoreHttpTest extends PruebaHttp {
 		Respuesta r = evaluar(sumaNegativaSolicitud());
 		assertEvaluacion(r, 0, "BAJA");
 		assertThat(r.motivos()).last().isEqualTo("Score limitado al mínimo de 0 (suma -55)");
+		assertThat(r.motivos()).noneMatch(m -> m.startsWith("No elegible") || m.startsWith("Score ajustado"));
 	}
 
 	@Test
@@ -29,7 +30,7 @@ class ScoreHttpTest extends PruebaHttp {
 		Respuesta r = evaluar(con("situacion_laboral", "estudiante", "antiguedad_meses", 0, "urgencia", "sin_apuro",
 				"documentacion", "no", "motivo", "otro", "clearing", "no_se", "cuota_deudas", 20000));
 		assertEvaluacion(r, 0, "BAJA");
-		assertThat(r.motivos()).hasSize(7).noneMatch(m -> m.startsWith("Score limitado"));
+		assertThat(r.motivos()).hasSize(8).noneMatch(m -> m.startsWith("Score limitado"));
 	}
 
 	@Test
@@ -67,6 +68,7 @@ class ScoreHttpTest extends PruebaHttp {
 		Respuesta r = evaluar(base());
 		assertOk(r);
 		assertThat(r.motivos()).containsExactly(
+				"Edad de 18 años o más: elegible",
 				"Urgencia esta semana: +20",
 				"Documentación de ingresos disponible: +15",
 				"Destino del préstamo definido: +5",
@@ -80,9 +82,21 @@ class ScoreHttpTest extends PruebaHttp {
 	@DisplayName("Motivo de recorte al final y una sola vez")
 	void motivoDeRecorteAlFinalYUnaSolaVez() throws Exception {
 		List<String> motivos = evaluar(sumaNegativaSolicitud()).motivos();
-		assertThat(motivos).hasSize(8);
+		assertThat(motivos).hasSize(9);
+		assertThat(motivos.getFirst()).isEqualTo("Edad de 18 años o más: elegible");
 		assertThat(motivos.getLast()).startsWith("Score limitado");
 		assertThat(motivos).filteredOn(m -> m.startsWith("Score limitado")).hasSize(1);
+	}
+
+	@Test
+	@DisplayName("Motivo de ajuste al final y una sola vez")
+	void motivoDeAjusteAlFinalYUnaSolaVez() throws Exception {
+		List<String> motivos = evaluar(con("edad", 16)).motivos();
+		assertThat(motivos).hasSize(9);
+		assertThat(motivos.getFirst()).isEqualTo("No elegible: menor de 18 años");
+		assertThat(motivos.getLast()).startsWith("Score ajustado");
+		assertThat(motivos).filteredOn(m -> m.startsWith("Score ajustado")).hasSize(1);
+		assertThat(motivos).noneMatch(m -> m.startsWith("Score limitado"));
 	}
 
 	@Test
@@ -105,10 +119,19 @@ class ScoreHttpTest extends PruebaHttp {
 	@Test
 	@DisplayName("Caracteres no ASCII en UTF-8")
 	void caracteresNoAsciiEnUtf8() throws Exception {
-		Respuesta r = evaluar(con("cuota_deudas", 40000));
+		Respuesta r = evaluar(con("cuota_deudas", 40000, "edad", 16));
 		assertOk(r);
 		String decodificado = new String(r.bytes(), java.nio.charset.StandardCharsets.UTF_8);
-		assertThat(decodificado).contains("Carga de deuda de más del 50% del ingreso: -15").contains("Antigüedad");
+		assertThat(decodificado).contains("Carga de deuda de más del 50% del ingreso: -15").contains("Antigüedad")
+				.contains("No elegible: menor de 18 años");
+	}
+
+	@Test
+	@DisplayName("Motivo de elegibilidad sin puntaje")
+	void motivoDeElegibilidadSinPuntaje() throws Exception {
+		Respuesta r = evaluar(base());
+		assertOk(r);
+		assertThat(r.motivos().getFirst()).isEqualTo("Edad de 18 años o más: elegible").doesNotMatch(".*: [+-]?\\d+$");
 	}
 
 	@Test

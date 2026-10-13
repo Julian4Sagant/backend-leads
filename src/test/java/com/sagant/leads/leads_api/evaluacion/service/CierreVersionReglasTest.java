@@ -16,7 +16,7 @@ import org.kie.api.KieBase;
 class CierreVersionReglasTest {
 
 	/** Revisión con la que se guardó {@link #REGLAS_GUARDADAS}. */
-	private static final int REVISION_GUARDADA = 1;
+	private static final int REVISION_GUARDADA = 2;
 
 	/** Reglas del DRL como {@code nombre@regla}, ordenadas. */
 	private static final List<String> REGLAS_GUARDADAS = List.of(
@@ -34,6 +34,8 @@ class CierreVersionReglasTest {
 			"destino-no-definido@destino",
 			"documentacion-no@documentacion",
 			"documentacion-si@documentacion",
+			"edad-elegible@edad",
+			"edad-no-elegible@edad",
 			"situacion-dependiente@situacion-laboral",
 			"situacion-desempleado@situacion-laboral",
 			"situacion-estudiante@situacion-laboral",

@@ -27,7 +27,7 @@ public record VersionReglas(String valor) {
 	 * prioridad). Subirla cada vez que esa lógica cambia, y también cuando cambia la lista de
 	 * reglas del DRL (lo vigila el test de cierre).
 	 */
-	public static final int REVISION_LOGICA = 1;
+	public static final int REVISION_LOGICA = 2;
 
 	private static final int LARGO = 12;
 

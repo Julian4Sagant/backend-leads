@@ -12,7 +12,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import com.sagant.leads.leads_api.evaluacion.config.ReglasProperties;
 import com.sagant.leads.leads_api.evaluacion.model.Motivo;
 
-/** Cada (regla, código, puntos) da el texto exacto de la spec con la configuración por defecto. */
+/** Cada motivo da el texto exacto de la spec con la configuración por defecto o la indicada. */
 class TextosMotivosTest {
 
 	private final TextosMotivos textos = new TextosMotivos(ReglasDePrueba.propiedades());
@@ -57,6 +57,37 @@ class TextosMotivosTest {
 		assertThat(TextosMotivos.puntaje(puntos)).isEqualTo(esperado).doesNotContain("−");
 	}
 
+	@ParameterizedTest(name = "edad mínima {0}: {1} -> {2}")
+	@CsvSource(delimiter = '|', value = {
+			"18|elegible|Edad de 18 años o más: elegible",
+			"18|no-elegible|No elegible: menor de 18 años",
+			"21|elegible|Edad de 21 años o más: elegible",
+			"21|no-elegible|No elegible: menor de 21 años",
+			"21.0|no-elegible|No elegible: menor de 21 años",
+	})
+	void textosDeElegibilidadSinPuntaje(String edadMinima, String codigo, String esperado) {
+		String texto = conEdadMinima(edadMinima).texto(Motivo.elegibilidad("edad", codigo));
+		assertThat(texto).isEqualTo(esperado);
+		assertThat(texto).doesNotMatch(".*: [+-]?\\d+$");
+	}
+
+	@ParameterizedTest(name = "suma {0} -> {1}")
+	@CsvSource(delimiter = '|', value = {
+			"85|Score ajustado a 0 por inelegibilidad (suma 85)",
+			"0|Score ajustado a 0 por inelegibilidad (suma 0)",
+			"-55|Score ajustado a 0 por inelegibilidad (suma -55)",
+			"105|Score ajustado a 0 por inelegibilidad (suma 105)",
+	})
+	void textoDeAjustePorInelegibilidad(int suma, String esperado) {
+		assertThat(textos.ajustePorInelegibilidad(suma)).isEqualTo(esperado).doesNotContain("−");
+	}
+
+	@Test
+	void unMotivoDeElegibilidadSinTextoEsUnError() {
+		assertThatThrownBy(() -> textos.texto(Motivo.elegibilidad("domicilio", Motivo.ELEGIBLE)))
+				.isInstanceOf(IllegalStateException.class).hasMessageContaining("domicilio/elegible");
+	}
+
 	@Test
 	void textosDeRecorte() {
 		assertThat(textos.recorteAlMinimo(-55)).isEqualTo("Score limitado al mínimo de 0 (suma -55)");
@@ -78,6 +109,13 @@ class TextosMotivosTest {
 		assertThat(otros.texto(new Motivo("carga", "media", 5)))
 				.isEqualTo("Carga de deuda de más del 35% y hasta el 60% del ingreso: +5");
 		assertThat(otros.texto(new Motivo("carga", "alta", -15))).isEqualTo("Carga de deuda de más del 60% del ingreso: -15");
+	}
+
+	private static TextosMotivos conEdadMinima(String edadMinima) {
+		ReglasProperties base = ReglasDePrueba.propiedades();
+		var umbrales = new ReglasProperties.Umbrales(base.umbrales().antiguedad(), base.umbrales().carga(),
+				new BigDecimal(edadMinima));
+		return new TextosMotivos(new ReglasProperties(base.archivo(), base.prioridad(), umbrales, base.puntajes()));
 	}
 
 	@Test

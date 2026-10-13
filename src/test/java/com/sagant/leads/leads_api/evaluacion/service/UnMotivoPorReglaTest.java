@@ -31,8 +31,11 @@ import com.sagant.leads.leads_api.evaluacion.model.SolicitudDePrueba;
  */
 class UnMotivoPorReglaTest {
 
-	private static final Set<String> REGLAS = Set.of("urgencia", "documentacion", "destino",
+	private static final Set<String> REGLAS = Set.of("edad", "urgencia", "documentacion", "destino",
 			"situacion-laboral", "antiguedad", "clearing", "carga");
+
+	/** Edad: bordes 17 y 18 de la edad mínima y extremos 1 y 100. */
+	private static final int[] EDADES = { 1, 17, 18, 100 };
 
 	/** Antigüedad: bordes 5, 6, 11, 12 y extremos 0 y 600. */
 	private static final int[] ANTIGUEDADES = { 0, 5, 6, 11, 12, 600 };
@@ -50,11 +53,11 @@ class UnMotivoPorReglaTest {
 			evaluadas[0]++;
 			List<Motivo> motivos = motor.evaluar(solicitud);
 			List<String> reglas = motivos.stream().map(Motivo::regla).toList();
-			if (motivos.size() != 7 || !new HashSet<>(reglas).equals(REGLAS)) {
+			if (motivos.size() != REGLAS.size() || !new HashSet<>(reglas).equals(REGLAS)) {
 				errores.add(solicitud + " -> " + reglas);
 			}
 		});
-		assertThat(evaluadas[0]).isEqualTo(4 * 2 * 8 * 5 * ANTIGUEDADES.length * 3 * CARGAS.length);
+		assertThat(evaluadas[0]).isEqualTo(EDADES.length * 4 * 2 * 8 * 5 * ANTIGUEDADES.length * 3 * CARGAS.length);
 		assertThat(errores).isEmpty();
 	}
 
@@ -76,24 +79,26 @@ class UnMotivoPorReglaTest {
 			sesion.execute(List.of(solicitud, new Resultado()));
 		});
 		List<Rule> reglasDrl = kieBase.getKiePackage("reglas").getRules().stream().toList();
-		assertThat(reglasDrl).hasSize(23);
+		assertThat(reglasDrl).hasSize(25);
 		assertThat(reglasDrl).allSatisfy(r -> assertThat(REGLAS).contains((String) r.getMetaData().get("regla")));
 		assertThat(disparadas).containsExactlyInAnyOrderElementsOf(reglasDrl.stream().map(Rule::getName).toList());
 	}
 
 	private static void combinaciones(Consumer<Solicitud> accion) {
-		for (Urgencia urgencia : Urgencia.values()) {
-			for (Documentacion documentacion : Documentacion.values()) {
-				for (Destino destino : Destino.values()) {
-					for (SituacionLaboral situacion : SituacionLaboral.values()) {
-						for (int antiguedad : ANTIGUEDADES) {
-							for (Clearing clearing : Clearing.values()) {
-								for (String[] carga : CARGAS) {
-									accion.accept(SolicitudDePrueba.base().urgencia(urgencia)
-											.documentacion(documentacion).destino(destino)
-											.situacionLaboral(situacion).antiguedadMeses(antiguedad)
-											.clearing(clearing).monto("24000").plazoMeses(24)
-											.ingresoMensual(carga[0]).cuotaDeudas(carga[1]).build());
+		for (int edad : EDADES) {
+			for (Urgencia urgencia : Urgencia.values()) {
+				for (Documentacion documentacion : Documentacion.values()) {
+					for (Destino destino : Destino.values()) {
+						for (SituacionLaboral situacion : SituacionLaboral.values()) {
+							for (int antiguedad : ANTIGUEDADES) {
+								for (Clearing clearing : Clearing.values()) {
+									for (String[] carga : CARGAS) {
+										accion.accept(SolicitudDePrueba.base().edad(edad).urgencia(urgencia)
+												.documentacion(documentacion).destino(destino)
+												.situacionLaboral(situacion).antiguedadMeses(antiguedad)
+												.clearing(clearing).monto("24000").plazoMeses(24)
+												.ingresoMensual(carga[0]).cuotaDeudas(carga[1]).build());
+									}
 								}
 							}
 						}

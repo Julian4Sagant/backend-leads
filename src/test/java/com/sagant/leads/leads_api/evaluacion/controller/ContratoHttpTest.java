@@ -38,7 +38,7 @@ class ContratoHttpTest extends PruebaHttp {
 	@Test
 	@DisplayName("Varios errores en una misma solicitud")
 	void variosErroresEnUnaMismaSolicitud() throws Exception {
-		Respuesta r = evaluar(con("edad", 13, "clearing", "talvez"));
+		Respuesta r = evaluar(con("edad", 0, "clearing", "talvez"));
 		assertThat(r.status()).isEqualTo(400);
 		assertThat(r.errores()).containsExactly("edad:fuera-de-rango", "clearing:valor-no-permitido");
 	}
@@ -202,15 +202,27 @@ class ContratoHttpTest extends PruebaHttp {
 	}
 
 	@Test
+	@DisplayName("Edad 0")
+	void edad0() throws Exception {
+		assertValidacion(evaluar(con("edad", 0)), "edad", "fuera-de-rango");
+	}
+
+	@Test
+	@DisplayName("Edad 1")
+	void edad1() throws Exception {
+		assertOk(evaluar(con("edad", 1)));
+	}
+
+	@Test
 	@DisplayName("Edad 13")
 	void edad13() throws Exception {
-		assertValidacion(evaluar(con("edad", 13)), "edad", "fuera-de-rango");
+		assertEvaluacion(evaluar(con("edad", 13)), 0, "BAJA");
 	}
 
 	@Test
 	@DisplayName("Edad 14")
 	void edad14() throws Exception {
-		assertOk(evaluar(con("edad", 14)));
+		assertEvaluacion(evaluar(con("edad", 14)), 0, "BAJA");
 	}
 
 	@Test

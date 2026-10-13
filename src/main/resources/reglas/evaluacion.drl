@@ -5,8 +5,9 @@
 // application.yml. Por eso los tramos se nombran baja/media/alta y no con sus valores.
 //
 // Cada regla de negocio es un grupo de reglas DRL mutuamente excluyentes que comparten
-// @regla; exactamente una de cada grupo dispara por solicitud. Cada una emite
-// (regla, codigo, puntos); los textos en espanol y el orden los resuelve Java.
+// @regla; exactamente una de cada grupo dispara por solicitud. Las de puntaje emiten
+// (regla, codigo, puntos) y las excluyentes (regla, elegible | no-elegible), sin puntos;
+// los textos en espanol, el orden y la precedencia los resuelve Java.
 
 package reglas;
 
@@ -15,6 +16,7 @@ import com.sagant.leads.leads_api.evaluacion.enums.Destino;
 import com.sagant.leads.leads_api.evaluacion.enums.Documentacion;
 import com.sagant.leads.leads_api.evaluacion.enums.SituacionLaboral;
 import com.sagant.leads.leads_api.evaluacion.enums.Urgencia;
+import com.sagant.leads.leads_api.evaluacion.model.Motivo;
 import com.sagant.leads.leads_api.evaluacion.model.Resultado;
 import com.sagant.leads.leads_api.evaluacion.model.Solicitud;
 
@@ -26,6 +28,32 @@ function void emitir(org.kie.api.runtime.rule.RuleContext contexto, Resultado re
         String codigo, java.math.BigDecimal puntos) {
     resultado.agregar((String) contexto.getRule().getMetaData().get("regla"), codigo, puntos);
 }
+
+// Agrega el motivo de elegibilidad (Motivo.ELEGIBLE o Motivo.NO_ELEGIBLE) de una regla excluyente.
+function void emitirElegibilidad(org.kie.api.runtime.rule.RuleContext contexto, Resultado resultado,
+        String codigo) {
+    resultado.agregarElegibilidad((String) contexto.getRule().getMetaData().get("regla"), codigo);
+}
+
+// ---- Elegibilidad por edad (excluyente) ----
+
+rule "edad-elegible"
+    @regla("edad")
+when
+    Solicitud( edadAlMenos(umbrales.edadMinima()) )
+    $r : Resultado()
+then
+    emitirElegibilidad(drools, $r, Motivo.ELEGIBLE);
+end
+
+rule "edad-no-elegible"
+    @regla("edad")
+when
+    Solicitud( !edadAlMenos(umbrales.edadMinima()) )
+    $r : Resultado()
+then
+    emitirElegibilidad(drools, $r, Motivo.NO_ELEGIBLE);
+end
 
 // ---- Urgencia ----
 

@@ -8,9 +8,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.context.TestPropertySource;
 
 /**
- * Tarea 6.11: escenarios que la configuración real no alcanza. La solicitud base suma 85 con
- * urgencia esta_semana en +20; cambiando solo ese puntaje la suma pasa a 105, 100, 59 o 29.
- * Cada caso es un contexto propio.
+ * Escenarios que la configuración real no alcanza. La solicitud base suma 85 con urgencia
+ * esta_semana en +20; cambiando solo ese puntaje la suma pasa a 105, 100, 59 o 29. También el
+ * umbral de MEDIA en 0. Cada caso es un contexto propio.
  */
 class ScoreConfiguracionDePruebaHttpTest {
 
@@ -23,7 +23,16 @@ class ScoreConfiguracionDePruebaHttpTest {
 		void sumaMayorQue100() throws Exception {
 			Respuesta r = evaluar(base());
 			assertEvaluacion(r, 100, "ALTA");
-			assertThat(r.motivos()).hasSize(8).last().isEqualTo("Score limitado al máximo de 100 (suma 105)");
+			assertThat(r.motivos()).hasSize(9).last().isEqualTo("Score limitado al máximo de 100 (suma 105)");
+		}
+
+		@Test
+		@DisplayName("Menor con suma mayor que 100")
+		void menorConSumaMayorQue100() throws Exception {
+			Respuesta r = evaluar(con("edad", 16));
+			assertEvaluacion(r, 0, "BAJA");
+			assertThat(r.motivos()).last().isEqualTo("Score ajustado a 0 por inelegibilidad (suma 105)");
+			assertThat(r.motivos()).noneMatch(m -> m.startsWith("Score limitado"));
 		}
 	}
 
@@ -36,7 +45,7 @@ class ScoreConfiguracionDePruebaHttpTest {
 		void sumaExactamente100() throws Exception {
 			Respuesta r = evaluar(base());
 			assertEvaluacion(r, 100, "ALTA");
-			assertThat(r.motivos()).hasSize(7).noneMatch(m -> m.startsWith("Score limitado"));
+			assertThat(r.motivos()).hasSize(8).noneMatch(m -> m.startsWith("Score limitado"));
 		}
 	}
 
@@ -59,6 +68,17 @@ class ScoreConfiguracionDePruebaHttpTest {
 		@DisplayName("Score 29")
 		void score29() throws Exception {
 			assertEvaluacion(evaluar(base()), 29, "BAJA");
+		}
+	}
+
+	@Nested
+	@TestPropertySource(properties = "leads.reglas.prioridad.media=0")
+	class MediaEn0 extends PruebaHttp {
+
+		@Test
+		@DisplayName("Menor con prioridad media configurada en 0")
+		void menorConPrioridadMediaConfiguradaEn0() throws Exception {
+			assertEvaluacion(evaluar(con("edad", 16)), 0, "BAJA");
 		}
 	}
 }
