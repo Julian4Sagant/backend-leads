@@ -63,7 +63,7 @@ Rebanada base: POST /evaluar de punta a punta.
 - El DTO usa desde el inicio la representación "cruda" de los números (notas,
   punto c), para que el change 3 no tenga que rehacerlo.
 
-### 2. `leads-api-agregar-elegibilidad-edad` (implementado, en revisión)
+### 2. `leads-api-agregar-elegibilidad-edad` (archivado)
 Decisiones del explore del 2026-10-13:
 - Regla de edad en el DRL (motivo `ELEGIBILIDAD`). Menor que la edad mínima:
   no elegible, prioridad BAJA, score 0. Las reglas de puntaje se evalúan igual
@@ -268,6 +268,6 @@ Surgieron después del change 1 y todavía no tienen change ni decisión:
   de hacerle responder las 12 preguntas para terminar no elegible.
 
 ## Próximo paso
-Revisión del código del change 2 en el PR #4, archive y merge. Después,
-explore del change siguiente. Si el servicio se va a dejar expuesto por ngrok más seguido, conviene que el
+Merge del PR #4 y reinicio del servicio para que tome las reglas nuevas.
+Después, explore del change siguiente. Si el servicio se va a dejar expuesto por ngrok más seguido, conviene que el
 siguiente sea el change 4 (límite de tamaño del cuerpo).

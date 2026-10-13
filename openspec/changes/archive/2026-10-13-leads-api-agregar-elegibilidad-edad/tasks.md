@@ -46,7 +46,7 @@ verde al final del bloque.
 
 - [x] 6.1 Correr `./mvnw test` completo; verificar que todos los tests pasan
 - [x] 6.2 Correr `openspec validate leads-api-agregar-elegibilidad-edad --strict`; verificar que pasa sin advertencias
-- [ ] 6.3 Revisión del código por una persona en el PR (paso 13 del flujo); verificar que no quedan comentarios sin resolver
+- [x] 6.3 Revisión del código por una persona en el PR (paso 13 del flujo); verificar que no quedan comentarios sin resolver
 
 ## Workflow follow-up
 
