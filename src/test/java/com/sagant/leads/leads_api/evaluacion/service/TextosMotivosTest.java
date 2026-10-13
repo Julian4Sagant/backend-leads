@@ -68,7 +68,8 @@ class TextosMotivosTest {
 		ReglasProperties base = ReglasDePrueba.propiedades();
 		var umbrales = new ReglasProperties.Umbrales(
 				new ReglasProperties.Umbrales.Antiguedad(new BigDecimal("24"), new BigDecimal("3")),
-				new ReglasProperties.Umbrales.Carga(new BigDecimal("0.35"), new BigDecimal("0.6")));
+				new ReglasProperties.Umbrales.Carga(new BigDecimal("0.35"), new BigDecimal("0.6")),
+				base.umbrales().edadMinima());
 		var otros = new TextosMotivos(new ReglasProperties(base.archivo(), base.prioridad(), umbrales, base.puntajes()));
 		assertThat(otros.texto(new Motivo("antiguedad", "alta", 10))).isEqualTo("Antigüedad laboral de 24 meses o más: +10");
 		assertThat(otros.texto(new Motivo("antiguedad", "media", 5))).isEqualTo("Antigüedad laboral de 3 a 23 meses: +5");

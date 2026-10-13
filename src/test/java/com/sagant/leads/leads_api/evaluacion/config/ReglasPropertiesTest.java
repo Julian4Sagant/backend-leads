@@ -43,6 +43,7 @@ class ReglasPropertiesTest {
 			assertThat(reglas.umbrales().antiguedad().mesesMedio()).isEqualByComparingTo("6");
 			assertThat(reglas.umbrales().carga().baja()).isEqualByComparingTo("0.3");
 			assertThat(reglas.umbrales().carga().alta()).isEqualByComparingTo("0.5");
+			assertThat(reglas.umbrales().edadMinima()).isEqualByComparingTo("18");
 			var p = reglas.puntajes();
 			assertThat(p.urgencia().estaSemana()).isEqualByComparingTo("20");
 			assertThat(p.urgencia().esteMes()).isEqualByComparingTo("15");
@@ -89,6 +90,44 @@ class ReglasPropertiesTest {
 	void puntajeFaltante() {
 		runner.withPropertyValues("leads.reglas.puntajes.urgencia.esta-semana=")
 				.run(context -> assertFallaNombrando(context, "leads.reglas.puntajes.urgencia.estaSemana"));
+	}
+
+	@Test
+	@DisplayName("Edad mínima faltante")
+	void edadMinimaFaltante() {
+		runner.withPropertyValues("leads.reglas.umbrales.edad-minima=")
+				.run(context -> assertFallaNombrando(context, "leads.reglas.umbrales.edadMinima"));
+	}
+
+	@Test
+	@DisplayName("Edad mínima 0")
+	void edadMinima0() {
+		runner.withPropertyValues("leads.reglas.umbrales.edad-minima=0")
+				.run(context -> assertFallaNombrando(context, "leads.reglas.umbrales.edadMinima"));
+	}
+
+	@Test
+	@DisplayName("Edad mínima 101")
+	void edadMinima101() {
+		runner.withPropertyValues("leads.reglas.umbrales.edad-minima=101")
+				.run(context -> assertFallaNombrando(context, "leads.reglas.umbrales.edadMinima"));
+	}
+
+	@Test
+	@DisplayName("Edad mínima con decimales")
+	void edadMinimaConDecimales() {
+		runner.withPropertyValues("leads.reglas.umbrales.edad-minima=18.5")
+				.run(context -> assertFallaNombrando(context, "leads.reglas.umbrales.edadMinima"));
+	}
+
+	/** Bordes válidos de la edad mínima: 1 y 100 arrancan; 18.0 se lee como 18. */
+	@ParameterizedTest(name = "edad mínima {0} arranca")
+	@CsvSource({ "1", "100", "18.0" })
+	void edadMinimaEnLosBordesArranca(String valor) {
+		runner.withPropertyValues("leads.reglas.umbrales.edad-minima=" + valor).run(context -> {
+			assertThat(context).hasNotFailed();
+			assertThat(context.getBean(ReglasProperties.class).umbrales().edadMinima()).isEqualByComparingTo(valor);
+		});
 	}
 
 	/** Borde exacto de cada condición de coherencia y del requisito de puntajes enteros. */

@@ -6,8 +6,8 @@ nombre. Cada grupo termina con `./mvnw test` en verde.
 
 ## 1. Configuración de la edad mínima
 
-- [ ] 1.1 Agregar `edadMinima` a `ReglasProperties.Umbrales` (D1) y `leads.reglas.umbrales.edad-minima: 18` a `application.yml`, con un comentario sobre el plural con edad mínima 1; verificar con el test de configuración por defecto que se carga 18
-- [ ] 1.2 Tests de arranque de «Edad mínima faltante», «Edad mínima 0», «Edad mínima 101» y «Edad mínima con decimales», más los bordes 1 y 100 que arrancan; verificar que el contexto falla y el mensaje nombra la propiedad
+- [x] 1.1 Agregar `edadMinima` a `ReglasProperties.Umbrales` (D1) y `leads.reglas.umbrales.edad-minima: 18` a `application.yml`, con un comentario sobre el plural con edad mínima 1; verificar con el test de configuración por defecto que se carga 18
+- [x] 1.2 Tests de arranque de «Edad mínima faltante», «Edad mínima 0», «Edad mínima 101» y «Edad mínima con decimales», más los bordes 1 y 100 que arrancan; verificar que el contexto falla y el mensaje nombra la propiedad
 
 ## 2. Regla de edad y motivos de elegibilidad
 

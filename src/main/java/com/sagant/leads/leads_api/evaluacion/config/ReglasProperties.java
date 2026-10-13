@@ -7,6 +7,7 @@ import org.springframework.validation.annotation.Validated;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -38,9 +39,14 @@ public record ReglasProperties(
 		}
 	}
 
+	/**
+	 * @param edadMinima edad desde la que una solicitud es elegible (entero de 1 a 100); menor a eso,
+	 *                   no elegible
+	 */
 	public record Umbrales(
 			@NotNull @Valid Antiguedad antiguedad,
-			@NotNull @Valid Carga carga) {
+			@NotNull @Valid Carga carga,
+			@NotNull @Entero @DecimalMin("1") @DecimalMax("100") BigDecimal edadMinima) {
 
 		/** Antigüedad en meses: tramo alto desde mesesAlto; tramo medio desde mesesMedio. */
 		public record Antiguedad(
