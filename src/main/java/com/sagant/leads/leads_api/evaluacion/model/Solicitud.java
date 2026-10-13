@@ -59,6 +59,11 @@ public record Solicitud(
 		return deudaPorPlazo.compareTo(limite) <= 0;
 	}
 
+	/** Indica si la edad es de al menos {@code anios}. */
+	public boolean edadAlMenos(BigDecimal anios) {
+		return BigDecimal.valueOf(edad).compareTo(anios) >= 0;
+	}
+
 	/** Indica si la antigüedad laboral es de al menos {@code meses}. */
 	public boolean antiguedadAlMenos(BigDecimal meses) {
 		return BigDecimal.valueOf(antiguedadMeses).compareTo(meses) >= 0;

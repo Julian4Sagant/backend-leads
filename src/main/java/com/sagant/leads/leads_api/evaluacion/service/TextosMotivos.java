@@ -6,13 +6,14 @@ import java.util.Map;
 import org.springframework.stereotype.Component;
 
 import com.sagant.leads.leads_api.evaluacion.config.ReglasProperties;
+import com.sagant.leads.leads_api.evaluacion.enums.TipoMotivo;
 import com.sagant.leads.leads_api.evaluacion.model.Motivo;
 
 /**
  * Textos en español de los motivos. El DRL emite solo códigos (es ASCII); acá se arman las frases
  * de la spec.
  *
- * <p>Los textos de antigüedad y carga usan los umbrales configurados, para que un motivo nunca
+ * <p>Los textos de edad, antigüedad y carga usan los umbrales configurados, para que un motivo nunca
  * describa un corte distinto del real. Si cambia un texto o la forma de armarlo, hay que subir
  * {@code REVISION_LOGICA} en la versión de reglas.
  */
@@ -49,6 +50,9 @@ public class TextosMotivos implements RedaccionMotivos {
 
 	@Override
 	public String texto(Motivo motivo) {
+		if (motivo.tipo() == TipoMotivo.ELEGIBILIDAD) {
+			return elegibilidad(motivo);
+		}
 		return frase(motivo) + ": " + puntaje(motivo.puntos());
 	}
 
@@ -62,9 +66,25 @@ public class TextosMotivos implements RedaccionMotivos {
 		return "Score limitado al máximo de 100 (suma " + suma + ")";
 	}
 
+	@Override
+	public String ajustePorInelegibilidad(int suma) {
+		return "Score ajustado a 0 por inelegibilidad (suma " + suma + ")";
+	}
+
 	/** {@code +N} si es positivo, {@code -N} si es negativo (guion ASCII) y {@code 0} sin signo. */
 	static String puntaje(int puntos) {
 		return puntos > 0 ? "+" + puntos : Integer.toString(puntos);
+	}
+
+	/** Los motivos de elegibilidad no llevan puntaje. */
+	private String elegibilidad(Motivo motivo) {
+		String clave = motivo.regla() + "/" + motivo.codigo();
+		String edadMinima = numero(umbrales.edadMinima());
+		return switch (clave) {
+			case "edad/" + Motivo.ELEGIBLE -> "Edad de " + edadMinima + " años o más: elegible";
+			case "edad/" + Motivo.NO_ELEGIBLE -> "No elegible: menor de " + edadMinima + " años";
+			default -> throw new IllegalStateException("Motivo sin texto: " + clave);
+		};
 	}
 
 	private String frase(Motivo motivo) {

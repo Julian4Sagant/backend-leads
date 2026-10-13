@@ -193,6 +193,25 @@ Las consecuencias de esta tabla (con `clearing = si` nadie llega a ALTA; un
 estudiante llega a ALTA solo con el puntaje perfecto; un desempleado nunca
 llega a ALTA) están confirmadas como comportamiento buscado.
 
+**Desde el change 2:** la tabla no cambia para una solicitud elegible (edad
+igual o mayor que la mínima, hoy 18): el motivo de edad no suma puntos. Una
+solicitud no elegible siempre termina con score 0 y prioridad BAJA, sea cual
+sea su suma, así que la tabla no se le aplica. El test de máximos usa la
+solicitud base, de 32 años.
+
+## g. Motivos de edad (change 2)
+
+- Siempre van primero y no llevan puntaje: "Edad de 18 años o más: elegible"
+  o "No elegible: menor de 18 años". El 18 sale de
+  `leads.reglas.umbrales.edad-minima`, así que con otra edad mínima los textos
+  la siguen.
+- Para un no elegible, el último motivo es siempre "Score ajustado a 0 por
+  inelegibilidad (suma X)", también si la suma es 0 o está entre 0 y 100. Nunca
+  aparece junto con un motivo "Score limitado".
+- Con la edad mínima en 1 el texto diría "Edad de 1 años o más": se acepta,
+  porque esa configuración no tiene sentido de negocio (nadie sería no
+  elegible).
+
 ## Spike de Drools (explore del change 1)
 
 **Objetivo:** confirmar que Drools funciona en este stack antes de elegirlo.

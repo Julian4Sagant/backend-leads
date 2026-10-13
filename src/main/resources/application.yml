@@ -17,6 +17,9 @@ leads:
       carga:
         baja: 0.3
         alta: 0.5
+      # Menor que esta edad, la solicitud es no elegible. Entero de 1 a 100; los textos
+      # usan este valor ("menor de 18 años"). Con 1 nadie sería no elegible.
+      edad-minima: 18
     # "no" va entre comillas: en YAML, una clave no sin comillas se lee como el booleano false.
     puntajes:
       urgencia:

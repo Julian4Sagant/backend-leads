@@ -55,6 +55,11 @@ public final class SolicitudDePrueba {
 		return this;
 	}
 
+	public SolicitudDePrueba edad(int valor) {
+		this.edad = valor;
+		return this;
+	}
+
 	public SolicitudDePrueba situacionLaboral(SituacionLaboral valor) {
 		this.situacionLaboral = valor;
 		return this;
