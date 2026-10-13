@@ -65,8 +65,8 @@ verde.
 
 ## 8. Cierre
 
-- [ ] 8.1 Correr `./mvnw test` completo; verificar que todos los tests pasan y que la cantidad total coincide con la informada en el grupo anterior más los nuevos
-- [ ] 8.2 Correr `openspec validate leads-api-crear-evaluacion-puntaje --strict`; verificar que pasa sin advertencias
+- [x] 8.1 Correr `./mvnw test` completo; verificar que todos los tests pasan y que la cantidad total coincide con la informada en el grupo anterior más los nuevos
+- [x] 8.2 Correr `openspec validate leads-api-crear-evaluacion-puntaje --strict`; verificar que pasa sin advertencias
 - [ ] 8.3 Revisión del código por una persona en el PR (paso 13 del flujo); verificar que no quedan comentarios sin resolver
 
 ## Workflow follow-up
