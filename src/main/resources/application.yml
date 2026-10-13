@@ -17,6 +17,7 @@ leads:
       carga:
         baja: 0.3
         alta: 0.5
+    # "no" va entre comillas: en YAML, una clave no sin comillas se lee como el booleano false.
     puntajes:
       urgencia:
         esta-semana: 20
@@ -25,7 +26,7 @@ leads:
         sin-apuro: 0
       documentacion:
         si: 15
-        no: 0
+        "no": 0
       destino:
         definido: 5
         no-definido: 0
@@ -43,7 +44,7 @@ leads:
       clearing:
         si: -30
         no-se: -5
-        no: 0
+        "no": 0
       carga:
         baja: 20
         media: 5

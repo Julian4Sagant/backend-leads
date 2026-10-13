@@ -13,9 +13,9 @@ verde.
 
 ## 2. Configuración de reglas
 
-- [ ] 2.1 Crear los records de `leads.reglas` (prioridad, umbrales, puntajes) con `BigDecimal`, `@Validated` y la validación de coherencia de D7; verificar con un test de arranque que la configuración por defecto se carga
-- [ ] 2.2 Tests de arranque con `ApplicationContextRunner` de «Umbral de ALTA no mayor que el de MEDIA», «Umbrales de carga invertidos» y «Puntaje faltante»; verificar que el contexto falla y el mensaje nombra la propiedad
-- [ ] 2.3 Test de tabla de casos de la coherencia con el borde exacto de cada condición (ALTA = MEDIA, carga baja = alta, meses medio = alto, puntaje no entero como 20.5); verificar que cada caso falla o arranca según corresponde
+- [x] 2.1 Crear los records de `leads.reglas` (prioridad, umbrales, puntajes) con `BigDecimal`, `@Validated` y la validación de coherencia de D7; verificar con un test de arranque que la configuración por defecto se carga
+- [x] 2.2 Tests de arranque con `ApplicationContextRunner` de «Umbral de ALTA no mayor que el de MEDIA», «Umbrales de carga invertidos» y «Puntaje faltante»; verificar que el contexto falla y el mensaje nombra la propiedad
+- [x] 2.3 Test de tabla de casos de la coherencia con el borde exacto de cada condición (ALTA = MEDIA, carga baja = alta, meses medio = alto, puntaje no entero como 20.5); verificar que cada caso falla o arranca según corresponde
 
 ## 3. Motor de reglas con Drools
 
