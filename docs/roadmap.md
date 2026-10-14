@@ -108,10 +108,36 @@ Decisiones del explore del 2026-10-13:
 - Decisiones: 13 y 19. Depende de 1. Los bordes de rango (decisión 15) ya
   están en el change 1.
 
-### 4. `leads-api-limitar-tamano-cuerpo`
+### 4. `leads-api-limitar-tamano-cuerpo` (en curso)
 - Filtro propio de 16 KB que cubre Transfer-Encoding chunked; 413 con su `type`.
 - Orden 401 > 413 > 400.
 - Decisiones: 18 y 20. Depende de 1.
+
+Decisiones del explore del 2026-10-13:
+- **El límite aplica a cualquier pedido.** Si el Content-Length declara más
+  de 16 KB, se responde 413 apenas llega, sin leer el cuerpo, a cualquier ruta
+  y con cualquier método: antes que 404, 405 y 415. Si no declara tamaño
+  (chunked), se corta al leer; como solo `POST /evaluar` lee el cuerpo, una
+  ruta inexistente sigue dando 404.
+- **Borde exacto:** 16 KB son 16384 bytes del cuerpo, sin los headers. 16384
+  pasan y 16385 dan 413.
+- **Límite fijo en el código**, no configurable: es un límite de seguridad,
+  no una regla de negocio. Cambiarlo es un cambio de contrato y pasa por un
+  change.
+- Sin clave, 401 aunque el cuerpo sea grande: el filtro de la clave corre
+  primero y nunca lee el cuerpo.
+- El 413 deja su línea de error con `type` y estado, sin `session_id` (el
+  cuerpo no se llegó a interpretar), como dice «Registro de errores».
+- Spec: solo `acceso-api`. Un requirement nuevo, «Tamaño máximo del cuerpo»,
+  y un `MODIFIED` de «Catálogo de type de error» para sumar el 413 al
+  escenario «Cada type usado está en el catálogo». `evaluacion-leads` no
+  cambia.
+- n8n no cambia: un 413 quedaría como `ERROR` con su `type`. Se suma esa
+  fila a "Cómo leer la planilla" en la guía de integración, y al cerrar el
+  change se levanta la advertencia sobre el tamaño del cuerpo en el roadmap y
+  en la guía.
+- Fuera de alcance: el largo máximo de un número (change 3) y cualquier
+  límite de cantidad de pedidos.
 
 **Riesgo de orden:** entre el change 1 y el 4 el servicio no limita el tamaño
 del cuerpo. Si se expone por ngrok antes de cerrar el 4, el riesgo queda
@@ -250,9 +276,7 @@ Ninguna: todas se cerraron en el explore del 2026-10-13 (ver el change 2).
   `formato-invalido`: la regla mira cómo está escrito, no su valor.
 
 ### Change 4
-- ¿Un Content-Length mayor a 16 KB se rechaza antes de leer? Recomendación:
-  sí, y además contar lo leído.
-- Borde exacto: 16384 bytes pasa y 16385 da 413. Falta confirmarlo.
+Ninguna: todas se cerraron en el explore del 2026-10-13 (ver el change 4).
 
 ## Pendientes fuera del plan
 
@@ -271,6 +295,5 @@ Surgieron después del change 1 y todavía no tienen change ni decisión:
   de hacerle responder las 12 preguntas para terminar no elegible.
 
 ## Próximo paso
-Merge del PR #4 y reinicio del servicio para que tome las reglas nuevas.
-Después, explore del change siguiente. Si el servicio se va a dejar expuesto por ngrok más seguido, conviene que el
-siguiente sea el change 4 (límite de tamaño del cuerpo).
+Propuesta del change 4 (`/opsx:propose leads-api-limitar-tamano-cuerpo`).
+Después, el change 3 (formato estricto de los números).
