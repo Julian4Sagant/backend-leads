@@ -108,7 +108,7 @@ Decisiones del explore del 2026-10-13:
 - Decisiones: 13 y 19. Depende de 1. Los bordes de rango (decisión 15) ya
   están en el change 1.
 
-### 4. `leads-api-limitar-tamano-cuerpo` (en curso)
+### 4. `leads-api-limitar-tamano-cuerpo` (implementado, en revisión)
 - Filtro propio de 16 KB que cubre Transfer-Encoding chunked; 413 con su `type`.
 - Orden 401 > 413 > 400.
 - Decisiones: 18 y 20. Depende de 1.
@@ -139,10 +139,16 @@ Decisiones del explore del 2026-10-13:
 - Fuera de alcance: el largo máximo de un número (change 3) y cualquier
   límite de cantidad de pedidos.
 
-**Riesgo de orden:** entre el change 1 y el 4 el servicio no limita el tamaño
-del cuerpo. Si se expone por ngrok antes de cerrar el 4, el riesgo queda
-abierto. Hay dos opciones: no exponerlo hasta el 4, o adelantar el 4 al segundo
-lugar (es independiente de 2 y 3).
+Implementado el 2026-10-14. Durante la implementación se sumó la
+"lectura del resto" (design, D3): Jackson deja de leer cuando el JSON falla o
+el objeto termina, así que con chunked se termina de leer el cuerpo antes de
+responder `json-invalido` o de evaluar. Sin eso, un JSON roto al principio de
+un cuerpo grande daba 400 y un JSON chico seguido de basura daba 200.
+
+**Riesgo de orden (cerrado):** entre el change 1 y el 4 el servicio no
+limitaba el tamaño del cuerpo. Con el change 4 ese riesgo queda cerrado; lo que
+sigue abierto es que el servicio depende de una PC (ver "Pendientes fuera del
+plan").
 
 ## Decisiones transversales (confirmadas en el explore del change 1)
 
@@ -221,8 +227,8 @@ comun/       config · enums · exception · handler
 ```
 
 Los tests siguen la misma estructura. El DRL vive en
-`src/main/resources/reglas/`. El filtro de tamaño del cuerpo (change 4) va en
-`comun/filter/`.
+`src/main/resources/reglas/`. El filtro de tamaño del cuerpo (change 4) quedó en
+`seguridad/filter/`, junto al de la clave.
 
 ### Logging
 - Una línea por evaluación exitosa con `session_id`, prioridad, score y
@@ -295,5 +301,6 @@ Surgieron después del change 1 y todavía no tienen change ni decisión:
   de hacerle responder las 12 preguntas para terminar no elegible.
 
 ## Próximo paso
-Propuesta del change 4 (`/opsx:propose leads-api-limitar-tamano-cuerpo`).
-Después, el change 3 (formato estricto de los números).
+Revisión del código del change 4 en su PR, archive y merge; después, reiniciar
+el servicio. Lo demás (change 3, documentar Telegram y los pendientes para
+clientes) queda para próximas actualizaciones.

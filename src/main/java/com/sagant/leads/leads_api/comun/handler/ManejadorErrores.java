@@ -1,5 +1,6 @@
 package com.sagant.leads.leads_api.comun.handler;
 
+import java.io.IOException;
 import java.util.Optional;
 
 import org.jspecify.annotations.Nullable;
@@ -26,6 +27,7 @@ import com.sagant.leads.leads_api.comun.exception.CuerpoDemasiadoGrandeException
 import com.sagant.leads.leads_api.comun.exception.NoAutorizadoException;
 import com.sagant.leads.leads_api.comun.exception.ValidacionException;
 import com.sagant.leads.leads_api.evaluacion.validation.SessionIdDelRequest;
+import com.sagant.leads.leads_api.seguridad.filter.FiltroTamanoCuerpo;
 
 /**
  * Único lugar que arma respuestas de error: ProblemDetail (RFC 9457) con un {@code type} del
@@ -69,7 +71,9 @@ public class ManejadorErrores extends ResponseEntityExceptionHandler {
 	protected ResponseEntity<Object> handleExceptionInternal(Exception ex, @Nullable Object body, HttpHeaders headers,
 			HttpStatusCode statusCode, WebRequest request) {
 		TipoError tipo = switch (ex) {
-			case HttpMessageNotReadableException e -> TipoError.JSON_INVALIDO;
+			case HttpMessageNotReadableException e -> causadoPorCuerpoGrande(e) || superaElLimiteAlLeerElResto(request)
+					? TipoError.CUERPO_DEMASIADO_GRANDE
+					: TipoError.JSON_INVALIDO;
 			case NoResourceFoundException e -> TipoError.NO_ENCONTRADO;
 			case NoHandlerFoundException e -> TipoError.NO_ENCONTRADO;
 			case HttpRequestMethodNotSupportedException e -> TipoError.METODO_NO_PERMITIDO;
@@ -77,6 +81,39 @@ public class ManejadorErrores extends ResponseEntityExceptionHandler {
 			default -> TipoError.INTERNO;
 		};
 		return respuesta(tipo, headers, request, tipo == TipoError.INTERNO ? ex : null);
+	}
+
+	/**
+	 * Si el límite del cuerpo corta mientras Jackson lee, la excepción llega envuelta: se busca en
+	 * la cadena de causas para responder 413 y no {@code json-invalido}.
+	 */
+	private static boolean causadoPorCuerpoGrande(Throwable ex) {
+		for (Throwable t = ex; t != null; t = t.getCause()) {
+			if (t instanceof CuerpoDemasiadoGrandeException) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Jackson deja de leer apenas el JSON falla: antes de responder {@code json-invalido} se termina
+	 * de leer el cuerpo, por si en total pasa el límite.
+	 */
+	private static boolean superaElLimiteAlLeerElResto(WebRequest request) {
+		if (!(request instanceof ServletWebRequest servlet)) {
+			return false;
+		}
+		try {
+			FiltroTamanoCuerpo.leerElResto(servlet.getRequest());
+			return false;
+		}
+		catch (CuerpoDemasiadoGrandeException ex) {
+			return true;
+		}
+		catch (IOException ex) {
+			return false;
+		}
 	}
 
 	private ResponseEntity<Object> respuesta(TipoError tipo, HttpHeaders headers, WebRequest request,

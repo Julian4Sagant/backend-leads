@@ -81,9 +81,31 @@ causas: si encuentra una `CuerpoDemasiadoGrandeException`, responde
 `@ExceptionHandler(CuerpoDemasiadoGrandeException.class)` para el caso
 declarado, que llega sin envolver desde el filtro.
 
+**Lectura del resto (agregado durante la implementación).** Jackson deja de
+leer en cuanto el JSON falla o el objeto termina, así que con chunked el
+contador solo no alcanza:
+- un JSON roto en los primeros bytes de un cuerpo de 20 KB daría 400, y
+- un JSON válido chico seguido de 20 KB de basura daría 200.
+
+Por eso `FiltroTamanoCuerpo.leerElResto(request)` termina de leer lo que queda
+del cuerpo, con el mismo contador, si alguien ya empezó a leerlo. Se usa en
+dos lugares:
+- en `ManejadorErrores`, ante un `HttpMessageNotReadableException` sin
+  `CuerpoDemasiadoGrandeException` en la cadena: si al leer el resto se pasa
+  el límite, 413; si no, `json-invalido`;
+- en un `RequestBodyAdvice` (`LimiteCuerpoLeido`, `seguridad/config`), después
+  de leer bien el cuerpo: si el resto pasa el límite, 413 antes de evaluar.
+
+Una ruta que nunca lee el cuerpo no lo abre, así que sigue respondiendo 404
+como pide la spec.
+
 - *Alternativa:* leer el cuerpo completo en el filtro a un buffer y medirlo
-  antes de pasarlo. Se descarta: obliga a tener en memoria hasta 16 KB por
-  pedido aunque nadie lo lea, y duplica la lectura.
+  antes de pasarlo. Se descarta: una ruta inexistente con un cuerpo grande
+  chunked daría 413 y no 404, contra la spec, y obliga a tener en memoria
+  hasta 16 KB por pedido aunque nadie lo lea.
+- *Alternativa:* aceptar que con chunked el 413 solo se garantiza cuando el
+  JSON se lee entero. Se descarta: contradice el requirement («un cuerpo
+  mayor MUST responder 413»).
 
 ### D4. El log no cambia de forma
 

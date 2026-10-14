@@ -74,30 +74,42 @@ cubren la regex y `max-string-length`.
 
 ## b. Límite del cuerpo de 16 KB
 
-**Pieza:** un `OncePerRequestFilter` propio (`comun/filter`). Envuelve el request
-en un `HttpServletRequestWrapper` cuyo `getInputStream()` devuelve un
-`ServletInputStream` que cuenta los bytes leídos. Al superar 16384 bytes lanza
-`CuerpoDemasiadoGrandeException`.
+Implementado en `leads-api-limitar-tamano-cuerpo` (design, D1 a D3).
 
-- **Con Content-Length:** si declara más de 16384, se rechaza antes de leer.
-- **Chunked (sin Content-Length):** el contador corta la lectura en el byte
-  16385, sin importar lo que diga el header. Por eso cubre los dos casos.
-- La excepción se lanza mientras Jackson lee, así que llega envuelta en
-  `HttpMessageNotReadableException`. El advice debe revisar la cadena de causas
-  y responder 413 (`cuerpo-demasiado-grande`), no 400.
-- El filtro delega en `HandlerExceptionResolver` para que el error pase por el
-  mismo advice.
+**Pieza:** `FiltroTamanoCuerpo` (`seguridad/filter`), un `OncePerRequestFilter`
+que corre justo después del de la clave. El límite es fijo:
+`MAXIMO_BYTES = 16384`.
+
+- **Declarado:** si el Content-Length pasa el límite, delega una
+  `CuerpoDemasiadoGrandeException` en el `HandlerExceptionResolver` sin leer
+  el cuerpo. Como corre antes que el `DispatcherServlet`, el 413 gana sobre
+  404, 405 y 415, en cualquier ruta.
+- **Leído (chunked):** si no, envuelve el request en un
+  `HttpServletRequestWrapper` cuyo `ServletInputStream` (y su `getReader()`)
+  cuenta los bytes y lanza la excepción al pasar 16384.
+- **Lectura del resto:** Jackson deja de leer cuando el JSON falla o el objeto
+  termina, así que el contador solo no alcanza. `leerElResto(request)` termina
+  de leer el cuerpo, si alguien lo empezó: en `ManejadorErrores` antes de
+  responder `json-invalido`, y en el `RequestBodyAdvice` `LimiteCuerpoLeido`
+  después de leer bien el `@RequestBody`. Un cuerpo que nadie abrió no se lee,
+  así que una ruta inexistente sigue dando 404.
+- Cuando el contador corta mientras Jackson lee, la excepción llega envuelta
+  en `HttpMessageNotReadableException`: el manejador recorre la cadena de
+  causas para responder 413 y no 400.
 - Las propiedades de Tomcat no sirven para esto: `max-http-form-post-size`
-  aplica solo a formularios y `max-swallow-size` al cuerpo descartado.
+  aplica solo a formularios y `max-swallow-size` (2 MB) al cuerpo que descarta
+  después de responder.
 
 **Tests:**
-- MockMvc con un Content-Length de 16384 (pasa) y de 16385 (413).
+- MockMvc (siempre declara el largo): bordes 16384 (200) y 16385 (413), orden
+  frente a 401, 400, 404, 405 y 415, forma del ProblemDetail y log.
 - Chunked: `@SpringBootTest(webEnvironment = RANDOM_PORT)` con
-  `java.net.http.HttpClient` y `BodyPublishers.ofInputStream(...)`. Con un
-  largo desconocido, el cliente envía `Transfer-Encoding: chunked`. 20 KB dan
-  413, y el test verifica que no hay header Content-Length.
-- El filtro de tamaño también se puede testear de forma unitaria con un
-  request simulado que devuelva `getContentLength() == -1`.
+  `java.net.http.HttpClient` en HTTP/1.1 y `BodyPublishers.ofInputStream(...)`.
+  Con un largo desconocido el cliente manda Transfer-Encoding chunked; el test
+  verifica que no hay Content-Length.
+- Unitarios del filtro con un `MockHttpServletRequest` sin Content-Length:
+  borde exacto leyendo en bloque, de a un byte y con el reader, y la lectura
+  del resto.
 
 ## c. Número fuera de formato vs. tipo incorrecto
 
@@ -126,16 +138,17 @@ Más un escenario por cada entrada de la decisión 13.
 
 ## d. Orden 401 > 413
 
-**Resolución:** el filtro de clave se registra con un orden menor que el de
-tamaño y nunca lee el cuerpo. Responde 401 antes de que se consuma un solo
-byte.
+**Resolución:** `FiltroClaveApi` corre con `Ordered.HIGHEST_PRECEDENCE` y
+`FiltroTamanoCuerpo` con `HIGHEST_PRECEDENCE + 1`. El de la clave nunca lee el
+cuerpo, así que responde 401 antes de que se consuma un solo byte.
 
-**Tests:**
+**Tests** (implementados en el change 4):
 - 20 KB sin clave: 401.
-- 20 KB con clave válida: 413.
-- 20 KB con clave válida y JSON inválido: 413, no 400.
-- Ruta desconocida sin clave: 401; con clave válida: 404.
-- GET /evaluar sin clave: 401; con clave válida: 405.
+- 20 KB con clave válida y JSON inválido: 413, no 400 (también chunked).
+- 20 KB declarados con clave a una ruta desconocida, con PUT /evaluar y con
+  `text/plain`: 413, no 404, 405 ni 415.
+- 20 KB chunked con clave a una ruta desconocida: 404 (nadie lee el cuerpo).
+- Ruta desconocida y GET /evaluar sin clave: 401 (change 1).
 
 ## e. Charset UTF-8
 
@@ -295,9 +308,9 @@ version_reglas=...`); la clave no aparece en el log.
 **4. Exponerlo con ngrok y conectarlo con n8n:** está en
 [integracion-n8n.md](integracion-n8n.md), verificado de punta a punta el
 2026-10-13. Ahí está también cómo guardar la clave como variable de usuario de
-Windows para no copiarla entre terminales. Hasta cerrar
-`leads-api-limitar-tamano-cuerpo` el servicio no limita el tamaño del cuerpo
-(ver roadmap, "Riesgo de orden").
+Windows para no copiarla entre terminales. Desde
+`leads-api-limitar-tamano-cuerpo`, el servicio rechaza cuerpos de más de 16 KB
+con 413 (punto b).
 
 ## Otras notas
 

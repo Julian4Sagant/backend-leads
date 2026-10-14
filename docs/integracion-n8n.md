@@ -93,9 +93,9 @@ Tiene que responder `prioridad` ALTA, `score` 85, 8 motivos (el primero,
 `POST /evaluar 200` y en el servicio una línea
 `evaluacion session_id=prueba-ngrok-1 prioridad=ALTA score=85 ...`.
 
-**Al terminar, cortá ngrok** (Ctrl+C). Hasta que esté
-`leads-api-limitar-tamano-cuerpo`, el servicio no limita el tamaño de los
-pedidos.
+**Al terminar, cortá ngrok** (Ctrl+C). El servicio rechaza pedidos de más de
+16 KB y exige la clave, pero corre en tu PC: no conviene dejarlo expuesto
+cuando nadie lo usa.
 
 **Después de cada merge que cambie el servicio**, reinicialo (Ctrl+C y
 `.\mvnw.cmd spring-boot:run` de nuevo) para que tome las reglas nuevas.
@@ -231,6 +231,7 @@ Recibe las tres ramas. Si usa datos del lead, tomalos de
 | `ERROR` y `401 ...no-autorizado` | La clave de la credencial no coincide con la del servicio | Revisar la credencial |
 | `ERROR` y `415 ...` | El body no sale como JSON | Revisar Evaluar lead |
 | `ERROR` y `400 ...validacion campo:codigo` | Un dato del lead mal formado | Revisar el criterio o la normalización de ese campo |
+| `ERROR` y `413 ...cuerpo-demasiado-grande` | El pedido pasó los 16 KB (los de n8n pesan unos 300 bytes) | Revisar qué armó Evaluar lead: no debería pasar |
 | `ERROR` y `sin respuesta del servicio` | El servicio, ngrok o la red no respondieron (después de 3 intentos) | Levantar el servicio y ngrok |
 
 Los leads en `ERROR` hoy no se reintentan solos (ver el roadmap, "Pendientes

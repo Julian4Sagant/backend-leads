@@ -18,11 +18,12 @@ Este change no toca los motivos: el test que verifica su orden completo
 
 ## 2. Límite al leer el cuerpo (chunked)
 
-- [ ] 2.1 Sumar al filtro el `HttpServletRequestWrapper` con un `ServletInputStream` que cuenta los bytes de `read()` y `read(byte[], int, int)` y lanza la excepción al pasar 16384, con `getReader()` sobre el mismo stream (D2); verificar con un test unitario con un request sin Content-Length que 16384 bytes se leen completos y el byte 16385 lanza la excepción
-- [ ] 2.2 Hacer que `ManejadorErrores` recorra la cadena de causas de `HttpMessageNotReadableException` y responda 413 si encuentra `CuerpoDemasiadoGrandeException`, y `json-invalido` si no (D3); verificar que los tests de JSON inválido existentes siguen dando 400
-- [ ] 2.3 Tests con servidor real y cliente HTTP con cuerpo de largo desconocido (D5) de «Cuerpo grande sin tamaño declarado», «Cuerpo chico sin tamaño declarado», «Cuerpo grande sin tamaño declarado y JSON inválido» y «Cuerpo grande sin tamaño declarado a una ruta desconocida»; verificar en cada uno que el pedido no lleva Content-Length
-- [ ] 2.4 Verificar con el script de cobertura que cada escenario de las specs principales y del delta tiene un test con su `@DisplayName`, sin nombres huérfanos
-- [ ] 2.5 Actualizar `docs/notas-tecnicas-leads.md` (puntos b y d: paquete `seguridad/filter` y los dos controles), `docs/integracion-n8n.md` (fila del 413 en "Cómo leer la planilla" y sin la advertencia del tamaño del cuerpo) y `docs/roadmap.md` (change 4 implementado y "Riesgo de orden" cerrado); verificar que no contradicen la spec
+- [x] 2.1 Sumar al filtro el `HttpServletRequestWrapper` con un `ServletInputStream` que cuenta los bytes de `read()` y `read(byte[], int, int)` y lanza la excepción al pasar 16384, con `getReader()` sobre el mismo stream (D2); verificar con un test unitario con un request sin Content-Length que 16384 bytes se leen completos y el byte 16385 lanza la excepción
+- [x] 2.2 Hacer que `ManejadorErrores` recorra la cadena de causas de `HttpMessageNotReadableException` y responda 413 si encuentra `CuerpoDemasiadoGrandeException`, y `json-invalido` si no (D3); verificar que los tests de JSON inválido existentes siguen dando 400
+- [x] 2.3 Agregar `FiltroTamanoCuerpo.leerElResto(request)`, usarlo en `ManejadorErrores` ante un JSON ilegible y en el `RequestBodyAdvice` `LimiteCuerpoLeido` después de leer el cuerpo (D3, lectura del resto); verificar con tests unitarios que un cuerpo ya empezado y de más de 16384 bytes da 413 y que uno sin empezar no se lee
+- [x] 2.4 Tests con servidor real y cliente HTTP con cuerpo de largo desconocido (D5) de «Cuerpo grande sin tamaño declarado», «Cuerpo chico sin tamaño declarado», «Cuerpo grande sin tamaño declarado y JSON inválido» y «Cuerpo grande sin tamaño declarado a una ruta desconocida», más un JSON válido chico seguido de 20 KB de relleno (413); verificar en cada uno que el pedido no lleva Content-Length
+- [x] 2.5 Verificar con el script de cobertura que cada escenario de las specs principales y del delta tiene un test con su `@DisplayName`, sin nombres huérfanos
+- [x] 2.6 Actualizar `docs/notas-tecnicas-leads.md` (puntos b y d: paquete `seguridad/filter`, los dos controles y la lectura del resto), `docs/integracion-n8n.md` (fila del 413 en "Cómo leer la planilla" y sin la advertencia del tamaño del cuerpo) y `docs/roadmap.md` (change 4 implementado y "Riesgo de orden" cerrado); verificar que no contradicen la spec
 
 ## 3. Cierre
 
