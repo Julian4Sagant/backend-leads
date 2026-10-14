@@ -22,6 +22,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import com.sagant.leads.leads_api.comun.enums.TipoError;
+import com.sagant.leads.leads_api.comun.exception.CuerpoDemasiadoGrandeException;
 import com.sagant.leads.leads_api.comun.exception.NoAutorizadoException;
 import com.sagant.leads.leads_api.comun.exception.ValidacionException;
 import com.sagant.leads.leads_api.evaluacion.validation.SessionIdDelRequest;
@@ -44,6 +45,11 @@ public class ManejadorErrores extends ResponseEntityExceptionHandler {
 	@ExceptionHandler(NoAutorizadoException.class)
 	ResponseEntity<Object> noAutorizado(NoAutorizadoException ex, WebRequest request) {
 		return respuesta(TipoError.NO_AUTORIZADO, new HttpHeaders(), request, null);
+	}
+
+	@ExceptionHandler(CuerpoDemasiadoGrandeException.class)
+	ResponseEntity<Object> cuerpoDemasiadoGrande(CuerpoDemasiadoGrandeException ex, WebRequest request) {
+		return respuesta(TipoError.CUERPO_DEMASIADO_GRANDE, new HttpHeaders(), request, null);
 	}
 
 	@ExceptionHandler(ValidacionException.class)

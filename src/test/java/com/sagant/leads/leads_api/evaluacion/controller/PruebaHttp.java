@@ -75,6 +75,20 @@ public abstract class PruebaHttp {
 		return s;
 	}
 
+	/**
+	 * La solicitud base más un campo extra {@code relleno} (que se ignora) de letras {@code x},
+	 * ajustado para que el JSON ocupe exactamente {@code bytes} bytes en UTF-8.
+	 */
+	public static String conRelleno(int bytes) {
+		Map<String, Object> s = base();
+		s.put("relleno", "");
+		int sinRelleno = JSON.writeValueAsString(s).getBytes(StandardCharsets.UTF_8).length;
+		s.put("relleno", "x".repeat(bytes - sinRelleno));
+		String json = JSON.writeValueAsString(s);
+		assertThat(json.getBytes(StandardCharsets.UTF_8)).hasSize(bytes);
+		return json;
+	}
+
 	/** POST /evaluar con la clave válida y Content-Type JSON. */
 	protected Respuesta evaluar(Map<String, Object> cuerpo) throws Exception {
 		return evaluarCrudo(JSON.writeValueAsString(cuerpo));

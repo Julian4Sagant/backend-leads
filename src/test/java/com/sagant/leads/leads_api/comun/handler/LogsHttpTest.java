@@ -93,6 +93,15 @@ class LogsHttpTest extends PruebaHttp {
 		assertThat(salida.getAll()).doesNotContain(incorrecta).doesNotContain(clave);
 	}
 
+	@Test
+	@DisplayName("Log del cuerpo demasiado grande")
+	void logDelCuerpoDemasiadoGrande(CapturedOutput salida) throws Exception {
+		assertThat(evaluarCrudo(conRelleno(16385)).status()).isEqualTo(413);
+		assertThat(mensajes(salida)).filteredOn(m -> m.startsWith("error ")).singleElement()
+				.isEqualTo("error type=" + URN + "cuerpo-demasiado-grande status=413");
+		assertThat(salida.getAll()).doesNotContain(SESSION_ID_BASE).doesNotContain("xxxxxxxxxx");
+	}
+
 	private static List<String> lineas(CapturedOutput salida) {
 		return Arrays.asList(salida.getAll().split("\\R"));
 	}

@@ -45,9 +45,10 @@ class ErrorInternoHttpTest extends PruebaHttp {
 				enviar(post("/evaluar").contentType(MediaType.APPLICATION_JSON).content("{}")),
 				enviar(get("/no-existe").header("X-API-Key", clave)),
 				enviar(get("/evaluar").header("X-API-Key", clave)),
+				evaluarCrudo(conRelleno(16385)),
 				enviar(post("/evaluar").header("X-API-Key", clave).contentType(MediaType.TEXT_PLAIN).content("{}")),
 				evaluar(base()));
-		assertThat(respuestas).extracting(Respuesta::status).containsExactly(400, 400, 401, 404, 405, 415, 500);
+		assertThat(respuestas).extracting(Respuesta::status).containsExactly(400, 400, 401, 404, 405, 413, 415, 500);
 		for (Respuesta r : respuestas) {
 			TipoError tipo = java.util.Arrays.stream(TipoError.values())
 					.filter(t -> t.urn().toString().equals(r.type())).findFirst().orElseThrow();

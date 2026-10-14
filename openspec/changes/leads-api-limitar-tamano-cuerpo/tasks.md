@@ -9,12 +9,12 @@ Este change no toca los motivos: el test que verifica su orden completo
 
 ## 1. Límite del tamaño declarado
 
-- [ ] 1.1 Crear `CuerpoDemasiadoGrandeException` en `comun/exception` (D2) y su `@ExceptionHandler` en `ManejadorErrores`, que responde `CUERPO_DEMASIADO_GRANDE` (D3); verificar con un test unitario del manejador que da 413 con el `type` del catálogo y sin `errores`
-- [ ] 1.2 Crear `FiltroTamanoCuerpo` en `seguridad/filter` con `@Order(Ordered.HIGHEST_PRECEDENCE + 1)` y `MAXIMO_BYTES = 16384`, que con Content-Length mayor al límite delega la excepción en el `HandlerExceptionResolver` sin seguir la cadena (D1, D2); verificar con un test unitario que 16384 sigue la cadena y 16385 no
-- [ ] 1.3 Tests HTTP de «Cuerpo de 16384 bytes» y «Cuerpo de 16385 bytes», con el relleno armado en bytes UTF-8 exactos (D5); verificar el Content-Type `application/problem+json;charset=UTF-8`, el `type`, el `status` y la ausencia de `errores`
-- [ ] 1.4 Tests HTTP de «Cuerpo grande sin clave», «Cuerpo grande con JSON inválido», «Cuerpo grande a una ruta desconocida», «Cuerpo grande con método no soportado» y «Cuerpo grande con Content-Type de texto plano»; verificar cada código de estado y que ninguno es el de la alternativa (400, 404, 405, 415)
-- [ ] 1.5 Test de «Log del cuerpo demasiado grande» con la captura de salida, como en `LogsHttpTest`; verificar que la línea tiene el `type` y `413` y no tiene el `session_id` ni el relleno
-- [ ] 1.6 Actualizar el test de «Cada type usado está en el catálogo» para que también provoque el 413; verificar que su `type` y su `status` coinciden con el catálogo
+- [x] 1.1 Crear `CuerpoDemasiadoGrandeException` en `comun/exception` (D2) y su `@ExceptionHandler` en `ManejadorErrores`, que responde `CUERPO_DEMASIADO_GRANDE` (D3); verificar con un test unitario del manejador que da 413 con el `type` del catálogo y sin `errores`
+- [x] 1.2 Crear `FiltroTamanoCuerpo` en `seguridad/filter` con `@Order(Ordered.HIGHEST_PRECEDENCE + 1)` y `MAXIMO_BYTES = 16384`, que con Content-Length mayor al límite delega la excepción en el `HandlerExceptionResolver` sin seguir la cadena (D1, D2); verificar con un test unitario que 16384 sigue la cadena y 16385 no
+- [x] 1.3 Tests HTTP de «Cuerpo de 16384 bytes» y «Cuerpo de 16385 bytes», con el relleno armado en bytes UTF-8 exactos (D5); verificar el Content-Type `application/problem+json;charset=UTF-8`, el `type`, el `status` y la ausencia de `errores`
+- [x] 1.4 Tests HTTP de «Cuerpo grande sin clave», «Cuerpo grande con JSON inválido», «Cuerpo grande a una ruta desconocida», «Cuerpo grande con método no soportado» y «Cuerpo grande con Content-Type de texto plano»; verificar cada código de estado y que ninguno es el de la alternativa (400, 404, 405, 415)
+- [x] 1.5 Test de «Log del cuerpo demasiado grande» con la captura de salida, como en `LogsHttpTest`; verificar que la línea tiene el `type` y `413` y no tiene el `session_id` ni el relleno
+- [x] 1.6 Actualizar el test de «Cada type usado está en el catálogo» para que también provoque el 413; verificar que su `type` y su `status` coinciden con el catálogo
 
 ## 2. Límite al leer el cuerpo (chunked)
 
