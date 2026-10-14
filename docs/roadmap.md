@@ -108,7 +108,7 @@ Decisiones del explore del 2026-10-13:
 - Decisiones: 13 y 19. Depende de 1. Los bordes de rango (decisión 15) ya
   están en el change 1.
 
-### 4. `leads-api-limitar-tamano-cuerpo` (implementado, en revisión)
+### 4. `leads-api-limitar-tamano-cuerpo` (archivado)
 - Filtro propio de 16 KB que cubre Transfer-Encoding chunked; 413 con su `type`.
 - Orden 401 > 413 > 400.
 - Decisiones: 18 y 20. Depende de 1.
@@ -301,6 +301,6 @@ Surgieron después del change 1 y todavía no tienen change ni decisión:
   de hacerle responder las 12 preguntas para terminar no elegible.
 
 ## Próximo paso
-Revisión del código del change 4 en su PR, archive y merge; después, reiniciar
-el servicio. Lo demás (change 3, documentar Telegram y los pendientes para
-clientes) queda para próximas actualizaciones.
+Merge del PR del change 4 y reinicio del servicio para que tome el límite. Lo
+demás (change 3, documentar Telegram y los pendientes para clientes) queda para
+próximas actualizaciones.
