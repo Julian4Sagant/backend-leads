@@ -27,8 +27,8 @@ Este change no toca los motivos: el test que verifica su orden completo
 
 ## 3. Cierre
 
-- [ ] 3.1 Correr `./mvnw clean test` completo; verificar que todos los tests pasan
-- [ ] 3.2 Correr `openspec validate leads-api-limitar-tamano-cuerpo --strict`; verificar que pasa sin advertencias
+- [x] 3.1 Correr `./mvnw clean test` completo; verificar que todos los tests pasan
+- [x] 3.2 Correr `openspec validate leads-api-limitar-tamano-cuerpo --strict`; verificar que pasa sin advertencias
 - [ ] 3.3 Revisión del código por una persona en el PR; verificar que no quedan comentarios sin resolver
 
 ## Workflow follow-up
